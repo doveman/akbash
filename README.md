@@ -1,9 +1,8 @@
 akbash
 ======
-
 Akbash - Open Source cgminer watchdog
 
-To get help at:
----------------
+For more info, go to:
+---------------------
 https://bitcointalk.org/index.php?topic=76208.0
 
