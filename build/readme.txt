@@ -1,1 +1,1 @@
-Output files willbe generated in this directory
+Output files will be generated in this directory
