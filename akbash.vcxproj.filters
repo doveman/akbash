@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="etc">
+      <UniqueIdentifier>{b0cba062-dd8b-4661-b6ff-44014d0855a8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\adl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\wdmain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\smtp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\network.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\msprocess.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\miner_monitor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\miner_api.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\listen.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\config.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\btc.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\smart_meter.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\config.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\log.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\listen.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\wdmain.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\smtp.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pool.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\network.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\msprocess.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\miner_monitor.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\btc.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\miner_api.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\adl_defines.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\adl_functions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\adl_sdk.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\adl_structures.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\adl.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\smart_meter.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="faq.txt" />
+    <None Include="release_notes.txt" />
+    <None Include="icon1.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="GNULicenseV3.txt" />
+    <None Include="etc\akbash-btc.conf">
+      <Filter>etc</Filter>
+    </None>
+    <None Include="etc\akbash-ltc.conf">
+      <Filter>etc</Filter>
+    </None>
+    <None Include="etc\readme.txt">
+      <Filter>etc</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="akbash.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

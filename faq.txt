@@ -1,0 +1,385 @@
+Q: What is akbash?
+------------------------
+A: akbash.exe is a Windows application that monitors execution of cgminer (bfgmainer) process.  It periodically checks status of each active GPU 
+and/or PGA.  It monitors AMD GPU hardware to detect temperatures, fan speeds and mining activity. Hash rates of GPUs and PGAs are also monitored
+and if any given hash average falls below configured threshold, it restarts the miner process.  Akbash can be run in smart metering mode
+to improve GPU mining electricity costs.
+
+The behaviour of akbash.exe can be customised through its JSON config file.
+
+Q: What platforms does akbash runs on?
+--------------------------------------------
+A: Windows only.  It has only been tested on Windows 7.
+
+Q: What does akbash do?
+-----------------------------
+A:  Here is a list of features:
+
+   - detects miner crashes and restarts miner process automatically
+   - monitors cgminer/bfgminer GPU and/or PGA hash rates and restarts (with a pause) miner process when rates fall below pre-configured threshold(s)
+   - detects when the system is hung and reboots the OS
+   - listens on pre-configured ip/port and responds to the following HTTP commands:  status, restart, reboot, getlog, help
+   - can remotely restart miner process
+   - can remotely reboot OS
+   - provides miner status web page via remote HTTP status request
+   - sends email notifications every time watchdog, miner or OS is restarted.  Also, it can be configured to send
+     email status notifications.
+   - provides pool balance, hash average, and pool efficiency in its status web page and email notification.
+   - retrieves the latest BTC quotes: last/bid/ask and provides them in email and web status reports.
+   - hardware monitoring of GPU temperature, fan speed and utilization, independent of info provided by miner API
+   - detection of faulty/broken fans
+   - detection of AMD driver crashes
+   - monitoring of hardware errors and automatic restart of the miner process when thresholds are reached
+   - restart/reboot reasons are provided in email notification reports
+   - supports smart metering schedules to disable/enable GPU mining activity
+
+Q: How do I install akbash?
+---------------------------------
+A: Please follow the following steps:
+
+   1. Copy akbash.exe and akbash.conf files to a subdirectory on the PC that is running cgminer/bfgminer.
+   2. Create a shortcut to "cgminer.exe -c my-cgminer.config" and place it on your desktop
+   3. Edit akbash.conf to update .lnk and .log file paths, change other parameters to suit your environment.
+   4. Enable "api-listen" : true in the cgminer/bfgminer config file. See cgminer/bfgminer configuration for details. Akbash communicates with cgminer/bfgminer
+      through 127.0.0.1:4028 port. Please configure cgminer/bfgminer to listen on this ip and port.
+
+	  Here are the recommended cgminer config entries:
+
+			"api-listen" : true,
+			"api-network" : true, 
+			"api-allow" : "W:127.0.0.1", 
+
+
+   5. If you want to receive email notifications, update your email address and email related fields in the config file.
+   6. Add a shortcut to akbash to your Startup folder.  Do not add cgminer/bfgminer shortcut/bat to the Startup folder, just akbash.
+      Watchdog will restart miner when OS is rebooted.
+  
+Q: How do I run akbash?
+-----------------------------
+A: Run "akbash akbash.conf" from the installation subdirectory or create a shortcut to that command and place it on your desktop.
+   Point your browser to http://listen-ip:listen-port/ .  See "listen-ip", "listen-port" in the akbash.conf file.
+
+
+Q: What are all these parameters in the conf file for?
+------------------------------------------------------
+A: Various functional areas can be controlled through settings in the config file.  Both field names and values should be
+enclosed with double quotes.  They are all treated as strings by the JSON parser.
+
+Logging:
+--------
+wdog-logFile  - location of akbash.exe log.  Log will grow until the files size reaches "log-file-size" in bytes.  
+                Example:  "c:\\users\\admin\\desktop\\akbash.log"
+
+
+wdog-log-file-size - max log file size before a new log file is created.  Recommended size is 500KB.  
+                     Maximum size allowed is 2MB, or 2097152 bytes.  Minimum size is 20000 bytes.
+                     When the maximum files size is reached, the current log is backed up as "logFile".001.txt
+                     Three backup files (*.001.txt, *.002.txt, *.003.txt) are kept.  The latest log is dropped when a new backup file is created.
+                     "getlog" HTTP command provides access to this log file remotely.  The backup files cannot be accesses remotely.
+
+wdog-logging-level -  logging levels, possible values: 0, 1, 2, or 3
+
+                      0 - only critical error messages are logged
+                      1 - only severe/error messages are logged
+                      2 - informational messages are logged in addition to severe and error messages
+                      3 - all of the above plus debugging messages are logged.  With this level, about 3 days of logs will be kept.
+
+                      Please note that starting with akbash version 1.0.4, logging level can be dynamically changed from akbash window by pressing 
+                      0, 1, 2 or 3. 
+
+Miner Monitoring:
+-----------------
+miner-exe-full-path - this parameter defines a shortcut to execute/restart cgminer.exe/bfgminer.exe.  
+                      Please define .lnk shortcut and specify its location in this entry.
+                      akbash will use this entry to restart cgminer.exe when any of the restart triggers are met.
+                      Example:  "c:\\users\\admin\\desktop\\cgminer.lnk"
+
+miner-exe-name - this is the name of miner process.  Default is "cgminer.exe".
+
+miner-init-interval - miner intialization wait time in seconds.  akbash will wait "miner-init-interval" seconds
+                      before trying to read GPU/PGA status(es) after a restart or reboot. Minimum interval is 30 seconds,
+                      also a default value.
+
+miner-gpu-avg-rate-threshold - the lowest average hash rate in Mh/s below which GPUs cannot fall for more than "alive-timeout"
+                               (see below) seconds.  If a GPU spends more than "alive-timeout" with avg rate below this threshold,
+                               miner will be restarted. Default value is 300.
+
+miner-pga-avg-rate-threshold - the lowest average hash rate in Mh/s below which GPUs cannot fall for more than "alive-timeout"
+                               (see below) seconds.  If a PGA spends more than "alive-timeout" with avg rate below this threshold,
+                               miner will be restarted. Default value is 200.
+
+miner-working-set-threshold - the upper threshold for miner process working set memory [in mega bytes].  Default is 600 MB.
+
+miner-handle-count-threshold - the upper threshold for miner process handle count [number of open handles]. Default is 10,000.
+
+miner-number-of-restarts - number of miner restarts before OS is rebooted.  If miner is restarted "number-of-restarts"+ 1 times,
+                           Windows will be rebooted automatically. Default value is 10.
+
+miner-alive-timeout - this is the interval in seconds for performing GPU/PGA hash rate checks.  Default value is 120, also a minimum
+                      value.
+
+miner-not-connected-timeout - akbash might lose connectivity with miner process due to high load or miner becoming unresponsive.  
+                              If akbash fails to reconnect within this timeout (in seconds) miner will be restarted.
+                              Default value is 60 seconds, also a minimum value.
+
+miner-hw-errors-threshold - if h/w errors as reported by miner API are greaterthan this threshold, miner will be restarted.
+                            Minimum value is 0, also a default value.
+
+wdog-cutoff-temperature - if temperature of any GPU reaches this value at any time, miner will be stopped for "wdog-cutoff-temperature-cooldown-period"
+                          minutes.  Default value is 86C.
+
+wdog-cutoff-temperature-cooldown-period - cooldown period in minutes after cutoff temperature has been reached. Default value is 5 minutes.
+
+wdog-disable-hw-monitoring - hardware (GPU) monitoring can be enabled or disabled with this entry.
+
+                         0 - hardware monitoring will be enabled
+                         1 - hardware monitoring will be disabled
+
+wdog-hw-monitoring-interval - how often (in seconds) to read GPU temperature and utilization? Default value is 60 (seconds), also a minimum value.
+                                    
+wdog-gpu-utilization-threshold - Percentage of GPU utilization below which miner will be restarted. Default is 20 %.
+                                 Minimum value is 10 %. This threshold will be used only when miner is in ALIVE or comes out of ALIVE states.
+
+wdog-gpu-utilization-timeout - If GPU utilization (as read from the hardware) stays below "wdog-gpu-utilization-threshold" for "wdog-gpu-utilization-timeout"
+                               seconds, the miner process will be restarted.  Default value is 80 seconds, also a minimum value.
+							   This timeout should be greater than "wdog-hw-monitoring-interval" for obvious reasons.
+
+							   
+Miner APIs:
+-----------
+By default, akbash connects to 127.0.0.1:4028 to query miner for its status and statistics of each gpu/pga.
+
+miner-api-poll-interval - this is similar to "alive-timeout" but internally, this value is used to perform the actual
+                          socket connections to  127.0.0.1:4028.  Default value is 20 seconds, also a minimum value.
+                          The maximum value is 120 seconds.  "alive-timeout" is used to wake up monitoring thread to
+                          check the rates/statues from a local cache.  This interval controls the thread that gets the
+                          status/statistics from the miner process.
+
+miner-listen-ip - cgminer should bind to this ip and listen on "miner-listen-port" for API commands.  Defualt value is "127.0.0.1".
+
+miner-listen-port - cgminer should be configured to listen on this port.  Default value is 4028.
+
+Here are example entries (from cgminer configuration file) to configure cgminer to listen on 127.0.0.1@4030
+
+"api-listen" : true,
+"api-port" : "4030",
+"api-network" : true, 
+"api-allow" : "W:127.0.0.1", 
+
+Please refer to cgminer documentation for more detailed description of the above entries.
+
+miner-solo-mining - this entry enables pool monitoring feature.  Akbash will check periodically if shares are being accepted by the pool.
+                    If miner is solo mining, set this entry to 1, if you are connecting to a pool, set it to 0.
+
+HTTP access:
+------------
+akbash listens on TCP port for incoming connections and responds to the following commands:
+
+   http://listen_ip:listen_port/wd_cmd=help;     -  help page
+   http://listen_ip:listen_port/wd_cmd=status;   -  watchdog, miner and pool status/statistics page
+   http://listen_ip:listen_port/wd_cmd=restart;  -  restarts miner process
+   http://listen_ip:listen_port/wd_cmd=reboot;   -  restarts Windows
+   http://listen_ip:listen_port/wd_cmd=getlog;   -  displays the latest log file
+   http://listen_ip:listen_port/wd_cmd=switch_poolN;   -  switches current pool to pool 'N', eg. http://listen_ip:listen_port/wd_cmd=switch_pool1
+
+Port and IP are configurable.
+
+wdog-listen-ip - akbash will bind and listen on this IP for new incoming HTTP connections. Default is 127.0.0.1
+
+wdog-listen-port - akbash will bind and listen on this port for new incoming HTTP connections. Default is 80
+
+wdog-disable-remote-api - all commands can be disabled or enabled with this entry.
+
+                         0 - remote HTTP commands will be enabled
+                         1 - remote HTTP commands will be disabled
+
+wdog-disable-remote-help - "help" command can be individually enabled or disabled with this entry.
+
+                         0 - remote HTTP "help" command will be enabled
+                         1 - remote HTTP "help" command will be disabled
+
+wdog-disable-remote-restart - "restart" command can be individually enabled or disabled with this entry.
+
+                         0 - remote HTTP "restart" command will be enabled
+                         1 - remote HTTP "restart" command will be disabled
+
+
+wdog-disable-remote-reboot  - "reboot" command can be individually enabled or disabled with this entry.
+
+                         0 - remote HTTP "reboot" command will be enabled
+                         1 - remote HTTP "reboot" command will be disabled
+
+wdog-disable-remote-reboot  - "getlog" command can be individually enabled or disabled with this entry.
+
+                         0 - remote HTTP "getlog" command will be enabled
+                         1 - remote HTTP "getlog" command will be disabled
+
+
+wdog-disable-remote-status  - "status" command can be individually enabled or disabled with this entry.
+
+                         0 - remote HTTP "status" command will be enabled
+                         1 - remote HTTP "status" command will be disabled
+
+Pool Info:
+----------
+akbash will periodically query pre-configured pool to retrieve balance and hash rates.
+Valids, stales and invalids will also be stored and used for pool efficiency calculation:
+  
+       pool efficiency = valids/(valids+stales+invalids);
+
+Pool statistics is included in status email and web page.
+
+disable-pool-info - pool monitoring will be disabled if this value is set to 0
+
+pool-refresh-interval - how ofter to ping the pool (in minutes).  Default value is 5 minutes, also a minimum value.
+
+pool-api-url - pool API url.  Example:
+               http://www.abcpool.co/api.php?api_key=2db4c9e0b7534d4741aef0d4628292ec047ed3ad647bd7a4ca13af2db3f8fbfe
+
+pool-balance-label - a string label to look for in the JSON return string to get BTC balance.  For abcpool.co, it is
+                     "confirmed_rewards"
+
+pool-hash-rate-label - a string label to look for in the JSON return string to get BTC balance.  For abcpool.co, it is
+                     "hashrate"
+
+
+pool-hash-valids-label - a string label to look for in the JSON return string to get BTC balance.  For abcpool.co, it is
+                     "running_valids"
+
+pool-hash-stales-label - a string label to look for in the JSON return string to get BTC balance.  For abcpool.co, it is
+                     "running_stales"
+
+pool-hash-invalids-label - a string label to look for in the JSON return string to get BTC balance.  For abcpool.co, it is
+                     "running_invalids"
+
+Email Notifications:
+--------------------
+akbash will send email notifications in the following cases:
+
+  - watchdog is restarted (manually or during OS reboot)
+  - miner is restarted
+  - OS is rebooted
+  - email status notifications as configured in the config file
+
+wdog-disable-notification-emails - 1 disables all email notifications, 0 enables it
+
+wdog-disable-status-notifications - 1 disables status email notifications, 0 enables it
+
+wdog-notifications-email-address - valid email address to send the watchdog emails to.  Please setup your email client
+                                   to receive emails with subject line containing "akbash".  Yahoo seems to place
+                                   akbash emails in inbox without any additional setup, but other email servers
+                                   might misplace them as junk email.  Yahoo email service is recommended.
+                                   Their email servers are robust and responsive.  Hotmail is good but their anti-spam
+                                   software checks the source IP, and most likely, your IP is not on their white list so your email notifications will
+                                   be marked as spam.
+ 
+wdog-status-notification-frequency - this entry determines how often to send emails status notifications in minutes.
+                                     Default value is 15 minutes, it is also a minimum value. It is recommended
+                                     that you set this setting to 60 minutes or higher, especially if you run
+                                     many rigs.
+
+wdog-rig-name - a unique name that identifies a mining rig.  This name willbe used in the subject line of all akbash emails
+
+BTC Quotes:
+-----------
+The latest quotes from any pre-configured provider are periodically retrieved and are included in the web and email status reports.
+Retrieval of quotes is done in the same thread that is doing pool statistics so quotes will be retrieved every "pool-refresh-interval" minutes.
+I think this is optimal.  No nee to run another thread just for quotes.
+
+btc-disable-quotes - enables/disables retrieval of BTC quotes
+
+                         0 - retrieval of BTC quotes will be enabled
+                         1 - retrieval of BTC quotes  will be disabled
+
+btc-refresh-interval- how often to query the BTC prices provider (in minutes).  Default value is 5 minutes, also a minimum value.
+
+btc-quote-url - enter the URL to query for JSON style quotes.  Recommended site is "https://mtgox.com/api/0/data/ticker.php", but you can configure
+                any other site that returns JSON string provided you configure last/bid/ask labels as specified below.
+
+btc-quote-last-label - this is a string label to look for "last" quote in the JSON string.  For mtgox.com, use "last_all"
+
+btc-quote-bid-label - this is a string label to look for "bid or buy" quote in the JSON string.  For mtgox.com, use "buy"
+
+btc-quote-ask-label - this is a string label to look for "ask or sell" quote in the JSON string.  For mtgox.com, use "sell"
+
+Smart Metering:
+---------------
+Smart metering feature allows an operator to configure ON/OFF GPU mining schedules based on local electric company electricity rates.
+This helps to save money by not using GPUs during ON-PEAK, high rate periods.  If your electric company charges different rates based
+on time of use, you might want to enable this feature.
+
+smart-metering-disable - enables/disables smart metering feature
+
+                         0 - smart metering feature will be enabled
+                         1 - smart metering feature will be disabled
+
+smart-metering-polling-interval - how often (in minutes) to poll the system clock to detect smart metering schedules.  Default value is 1 minute.
+ 
+smart-metering-on-peak-start-time - start time of a HIGH DEMAND/HIGEST electricity rate period.  Default value is "11:00" (eleven o'clock in the morning).
+                                    The time has to be entered based on a 24 hour clock.  "17:00" instead of "5pm".
+
+smart-metering-off-peak-start-time - start time of LOW DEMAND/LOWEST electricity rate period.  Default value is "17:00" (five o'clock in the afternoon).
+                                     The time has to be entered based on a 24 hour clock.  "17:00" instead of "5pm".
+
+smart-metering-on-peak-shutdown - Default value is "0".  Reserved for future use.
+ 
+smart-metering-on-peak-disable-gpus - determines whether to disable GPUs during ON-PEAK period.  Default value is "1" (disable GPUs).
+                                      
+
+Q: What information is provided in the HTTP status command (same info as in email status notification)?
+-------------------------------------------------------------------------------------------------------
+A: Here is an example of output from HTTP status command:
+
+---------------------------------------------------------------
+miner details:
+--------------
+total avg: 3605.07 Mh/s, a: 1783, hw: 0, e: 61.57%, u: 50.38/m
+
+age: 000:00:35:23, s: ALIVE, rc: 1/5
+pid: 2688, ws: 309/500, hc: 9807/11000
+
+gpu 0: ALIVE (ON), 516.31 Mh/s, 73C@33%, 925/50, hw: 0, u: 7.32/m
+gpu 1: ALIVE (ON), 515.74 Mh/s, 73C@47%, 925/50, hw: 0, u: 7.06/m
+gpu 2: ALIVE (ON), 515.62 Mh/s, 72C@27%, 925/50, hw: 0, u: 8.05/m
+total GPU avg: 1547.67 Mh/s, u: 22.43/m
+
+pga 0: ALIVE, 412.62 Mh/s, 0C, hw: 0, u: 5.62/m
+pga 1: ALIVE, 410.94 Mh/s, 0C, hw: 0, u: 5.60/m
+pga 2: ALIVE, 411.38 Mh/s, 0C, hw: 0, u: 5.28/m
+pga 3: ALIVE, 410.81 Mh/s, 0C, hw: 0, u: 5.79/m
+pga 4: ALIVE, 411.65 Mh/s, 0C, hw: 0, u: 5.65/m
+total PGA avg: 2057.40 Mh/s, u: 27.94/m
+
+amd gpu h/w details:
+--------------------
+u: 99%, t: 73C, fans ok: yes
+
+pool (www.abcpool.co) statistics:
+---------------------------------
+balance: 0.11592 BTC, avg: 3665.00 Mh/s, e: 99.52%
+
+BTC quotes:
+-----------
+bid/ask: $5.13/$5.15, last: $5.15
+
+watchdog details:
+-----------------
+pid: 2800, ws: 10, hc: 383, age: 000:00:55:56
+---------------------------------------------------------------
+
+Q: My miner is not running, akbash has entered NOT_CONNECTED state but it does not restart my miner?  Why not?
+-------------------------------------------------------------------------------------------------------------------------
+A: It will.  You just have to let it.  Watchdog will not restart miner just because it lost connectivity to the process.
+Sometimes on very busy system the connection might timeout (there is 10 second timeout on its local connect() socket calls).
+So akbash tries to connect several times (see "not-connected-timeout") before deciding it is time to restart miner process.
+One last thing you want is to restart miner for no apparent reason.  This also allows for miner to recover by itself if it can.
+
+Q: How do I terminate akbash.exe?
+---------------------------------------
+A: 'q' or 'Q' (just like cgminer.exe), or CTRL+C.  Both are detected so that akbash can shutdown properly.
+
+Q: I have question or suggestion.  How to reach you?
+----------------------------------------------------
+A: Contact me at peter@petermoss.com
+
+Please send donations to: 1CorsCrBEcbncfnR7BVKadUZbHP7xNZCjJ

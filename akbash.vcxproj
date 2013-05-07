@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{885D5931-5D73-4BB8-9FFC-BC95B9068733}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>akbash</RootNamespace>
+    <ProjectName>akbash</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(Configuration)\Intermediate\</IntDir>
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(Configuration)\Intermediate\</IntDir>
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;$(SolutionDir)lib</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);DPSAPI_VERSION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)yajl\include;$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);Ws2_32.lib;psapi.lib;$(SolutionDir)yajl\lib\Release\yajl_s.lib;Dnsapi.lib;Wininet.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <PostBuildEvent>
+      <Command>echo Done
+echo copying files to '$(SolutionDir)build' subdirectory...
+echo copying 'akbash-ltc.conf'
+copy $(SolutionDir)etc\akbash-ltc.conf $(SolutionDir)build
+echo copying 'akbash-btc.conf'
+copy $(SolutionDir)etc\akbash-btc.conf $(SolutionDir)build
+echo copying 'akbash.exe'
+copy $(SolutionDir)bin\Debug\akbash.exe $(SolutionDir)build
+echo To install akbash, copy contents of $(SolutionDir)build to your desired location</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);DPSAPI_VERSION;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)yajl\include;$(SolutionDir)include;C:\Program Files (x86)\AMD APP\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);Ws2_32.lib;psapi.lib;$(SolutionDir)\yajl\lib\Release\yajl_s.lib;Dnsapi.lib;Wininet.lib</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <Version>1.0.0</Version>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
+      <MapExports>true</MapExports>
+      <AssemblyDebug>true</AssemblyDebug>
+    </Link>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+    </CustomBuildStep>
+    <PostBuildEvent>
+      <Command>echo Done
+echo copying files to '$(SolutionDir)build' subdirectory...
+echo copying 'akbash-ltc.conf'
+copy $(SolutionDir)etc\akbash-ltc.conf $(SolutionDir)build
+echo copying 'akbash-btc.conf'
+copy $(SolutionDir)etc\akbash-btc.conf $(SolutionDir)build
+echo copying 'akbash.exe'
+copy $(SolutionDir)bin\Release\akbash.exe $(SolutionDir)build
+echo To install akbash, copy contents of $(SolutionDir)build to your desired location</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>copying files to build subdirectory</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\adl.cpp" />
+    <ClCompile Include="src\btc.cpp" />
+    <ClCompile Include="src\config.cpp" />
+    <ClCompile Include="src\miner_api.cpp" />
+    <ClCompile Include="src\miner_monitor.cpp" />
+    <ClCompile Include="src\log.cpp" />
+    <ClCompile Include="src\network.cpp" />
+    <ClCompile Include="src\pool.cpp" />
+    <ClCompile Include="src\msprocess.cpp" />
+    <ClCompile Include="src\listen.cpp" />
+    <ClCompile Include="src\smart_meter.cpp" />
+    <ClCompile Include="src\smtp.cpp" />
+    <ClCompile Include="src\wdmain.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Disabled</Optimization>
+      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BrowseInformation>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\adl.h" />
+    <ClInclude Include="include\adl_defines.h" />
+    <ClInclude Include="include\adl_functions.h" />
+    <ClInclude Include="include\adl_sdk.h" />
+    <ClInclude Include="include\adl_structures.h" />
+    <ClInclude Include="include\btc.h" />
+    <ClInclude Include="include\config.h" />
+    <ClInclude Include="include\miner_api.h" />
+    <ClInclude Include="include\miner_monitor.h" />
+    <ClInclude Include="include\log.h" />
+    <ClInclude Include="include\network.h" />
+    <ClInclude Include="include\pool.h" />
+    <ClInclude Include="include\msprocess.h" />
+    <ClInclude Include="include\listen.h" />
+    <ClInclude Include="include\smart_meter.h" />
+    <ClInclude Include="include\smtp.h" />
+    <ClInclude Include="include\wdmain.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="etc\akbash-btc.conf" />
+    <None Include="etc\akbash-ltc.conf" />
+    <None Include="etc\readme.txt" />
+    <None Include="faq.txt" />
+    <None Include="GNULicenseV3.txt" />
+    <None Include="icon1.ico" />
+    <None Include="release_notes.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="akbash.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
