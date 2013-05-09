@@ -57,6 +57,7 @@
 #define MINER_LISTEN_IP                "miner-listen-ip"
 #define MINER_LISTEN_PORT              "miner-listen-port"
 #define MINER_SOLO_MINING              "miner-solo-mining"
+#define MINER_BLOCK_FOUND_NOTIFICATION "miner-notify-when-block-found"
 
 // ---------------------
 // Pool related entries.
@@ -140,6 +141,7 @@ typedef struct _cgmConfig
     int    minerPollInterval;
 	unsigned long long minerHWErrorsThreshold;
 	int    minerSoloMining;
+	int    minerNotifyWhenBlockFound;
 
 	char   minerListenIP[32];
     int    minerListenPort;

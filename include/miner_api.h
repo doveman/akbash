@@ -54,6 +54,8 @@ typedef struct _gpu_Summary
 	int    secs;
 	double mhsAvg;
 	long   accepted;
+	long   rejected;
+	double bestshare;
 	long   getworks;
 	long   hw;
 	double util;

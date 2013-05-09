@@ -13,7 +13,7 @@
 #include "config.h"
 #include "msprocess.h"
 
-#define WDOG_VERSION "1.0.8"
+#define WDOG_VERSION "1.0.9"
 #define WDOG_STATUS_STR_LEN 15100
 
 extern int restartCount;

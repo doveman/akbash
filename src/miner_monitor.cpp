@@ -436,7 +436,22 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 									   "monitorThread(): miner reported NO change in number of accepted shares (%d) in the last 10 minutes; considered SICK ...", 
 									   _mi.summary.accepted
 									 );
+							lastAccepted = 0;
+
 							goto miner_restart_check;
+						}
+					} else
+					{
+						// ---------------------------------------------------------------------------------------------------
+						// Miner is solo mining, check if user wants to receive email notifications when a new block is found.
+						// ---------------------------------------------------------------------------------------------------
+						if (cfg->minerNotifyWhenBlockFound == 1)
+						{
+							if (_mi.summary.accepted > lastAccepted)
+							{
+								lastAccepted = _mi.summary.accepted;
+								send_smtp_block_found_msg();
+							}
 						}
 					}
 

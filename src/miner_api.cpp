@@ -962,9 +962,39 @@ void parseGPUSummary(char * buf, GPU_Summary * sum)
 															memset(temp, 0, sizeof(temp));
 															strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
 															sum->getworks = atol(temp);
+
+															ptr = strstr(buf, "Rejected");
+
+															if (ptr != NULL)
+															{
+																ptr += 10;
+
+																ptrEnd = strstr(ptr, ",");
+																if (ptrEnd != NULL)
+																{
+																	memset(temp, 0, sizeof(temp));
+																	strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+																	sum->rejected = atol(temp);
+																}
+
+															}
+
+															ptr = strstr(buf, "Best Share");
+
+															if (ptr != NULL)
+															{
+																ptr += 12;
+
+																ptrEnd = strstr(ptr, ",");
+																if (ptrEnd != NULL)
+																{
+																	memset(temp, 0, sizeof(temp));
+																	strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+																	sum->bestshare = atof(temp)/1000; // in K
+																}
+															}
 														}
 													}
-
 												}
 											}												
 										}

@@ -172,6 +172,8 @@ CGMConfig * parseConfigFile(const char * fileName)
 		const char * miner_listen_port[] = { MINER_LISTEN_PORT, (const char *) 0 };
 		const char * miner_solo_mining[] = { MINER_SOLO_MINING, (const char *) 0 };
 
+		const char * miner_block_found_notification[] = { MINER_BLOCK_FOUND_NOTIFICATION, (const char *) 0 };
+
 		const char * number_of_restarts[] = { NUMBER_OF_RESTARTS, (const char *) 0 };
 		const char * alive_timeout[] = { ALIVE_TIMEOUT, (const char *) 0 };
 		const char * not_connected_timeout[] = { NOT_CONNECTED_TIMEOUT, (const char *) 0 };
@@ -351,6 +353,16 @@ CGMConfig * parseConfigFile(const char * fileName)
 		} else
 		{
 			cgmConfig.minerSoloMining = atoi(YAJL_GET_STRING(v));
+		}		
+
+		v = yajl_tree_get(node, miner_block_found_notification, yajl_t_string);
+		if (v == NULL) 
+		{ 
+			fprintf(stderr, "\nparseConfigFile(): unable to find: \'%s\' field in the config file: \'%s\'. Defaulting to 0\n", miner_block_found_notification[0], fileName);
+			cgmConfig.minerNotifyWhenBlockFound = 0;
+		} else
+		{
+			cgmConfig.minerNotifyWhenBlockFound = atoi(YAJL_GET_STRING(v));
 		}		
 
 		// --------------------------

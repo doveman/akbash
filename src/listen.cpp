@@ -139,12 +139,14 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	// --------------
 	strcat_s(status, statusSize, "miner details:<br>--------------<br>");
 	sprintf_s( _temp, sizeof(_temp),
-		       "total avg: %.2f Mh/s, a: %d, hw: %d, e: %.2f%%, u: %.2f/m<br><br>",
+		       "total avg: %.2f Mh/s, a: %d, r: %d, hw: %d, e: %.2f%%, u: %.2f/m, bs: %.2fK<br><br>",
 			   _mi.summary.mhsAvg, 
 			   _mi.summary.accepted, 
+			   _mi.summary.rejected,
 			   _mi.summary.hw, 
 			   _mi.summary.getworks ? _mi.summary.accepted*100.0/_mi.summary.getworks : 0,
-			   _mi.summary.util
+			   _mi.summary.util,
+			   _mi.summary.bestshare			   
 			);
 
 	strcat_s(status, statusSize, _temp);

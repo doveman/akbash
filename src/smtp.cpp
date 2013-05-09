@@ -36,6 +36,9 @@
 // date, email, email, email, email, msg ID, ip, restart datatime, version, ip, email, restart datetime
 #define MSG_FORMAT_WDOG_RESTART "Date: %s\r\nFrom: <%s>\r\nSender: <%s>\r\nReply-To: <%s>\r\nTo: <%s>\r\nMessage-ID: %s\r\nSubject: akbash (%s): watchdog has been restarted at: %s\r\nKeywords: akbash, cgminer, bitcoin mining, BTC\r\nImportance: High\r\nPriority: urgent\r\nLanguage: en\r\nContent-Type: text/html; charset=UTF-8\r\nX-Mailer: Akbash ver. %s\r\nX-Mailer-Info: http://www.petermoss.com/akbash \r\nX-Originating-IP: %s\r\nXPriority: 1\r\nX-Sender: %s\r\n\r\n%s\r\n.\r\n"
 
+// date, email, email, email, email, msg ID, ip, restart datatime, version, ip, email, restart datetime
+#define MSG_FORMAT_NEW_BLOCK_FOUND "Date: %s\r\nFrom: <%s>\r\nSender: <%s>\r\nReply-To: <%s>\r\nTo: <%s>\r\nMessage-ID: %s\r\nSubject: akbash (%s): miner solved a block !$$$!\r\nKeywords: akbash, cgminer, bitcoin mining, BTC\r\nImportance: High\r\nPriority: urgent\r\nLanguage: en\r\nContent-Type: text/html; charset=UTF-8\r\nX-Mailer: Akbash ver. %s\r\nX-Mailer-Info: http://www.petermoss.com/akbash \r\nX-Originating-IP: %s\r\nXPriority: 1\r\nX-Sender: %s\r\n\r\n%s\r\n.\r\n"
+
 // date, email, email, email, email, msg ID, ip, version, ip, email, restart date time
 #define MSG_FORMAT_RESTART "Date: %s\r\nFrom: <%s>\r\nSender: <%s>\r\nReply-To: <%s>\r\nTo: <%s>\r\nMessage-ID: %s\r\nSubject: akbash (%s): miner has been restarted at: %s\r\nKeywords: akbash, cgminer, bitcoin mining, BTC\r\nImportance: High\r\nPriority: urgent\r\nLanguage: en\r\nContent-Type: text/html; charset=UTF-8\r\nX-Mailer: Akbash ver. %s\r\nX-Mailer-Info: http://www.petermoss.com/akbash \r\nX-Originating-IP: %s\r\nXPriority: 1\r\nX-Sender: %s\r\n\r\n%s\r\n.\r\n"
 
@@ -61,6 +64,7 @@ typedef struct _emailMsg
 #define WDOG_RESTART_EMAIL_TYPE    2
 #define OS_REBOOT_EMAIL_TYPE       3
 #define WDOG_STATUS_EMAIL_TYPE     4
+#define WDOG_NEW_BLOCK_EMAIL_TYPE  5
 
 void build_smtp_date(char *buf);    // buf should be SMTP_MAX_DATE_LEN bytes
 void build_smtp_msgId(char * buf);  // buf should be SMTP_MAX_MSGID_LEN bytes
@@ -136,6 +140,76 @@ void send_smtp_wdog_restarted_msg(void)
 
 	_beginthread( sendEmailThread, 0, (void *) msg );
 } // end of send_smtp_wdog_restarted_msg()
+
+
+void send_smtp_block_found_msg(void)
+{
+	char buf[SMTP_MAX_MSG_SIZE] = {0};
+	char dateStr[SMTP_MAX_DATE_LEN] = {0};
+	char msgId[SMTP_MAX_MSGID_LEN] = {0};
+	char * pMsg = NULL;
+	int msgLen = 0;
+	char msgBody[REASONS_STRING_MAX_LENGTH*2+1];
+	EmailMsg * msg = NULL;
+
+	if (_smtp_disable_email_notifications == 1) 
+	{
+		debug_log(LOG_SVR, "send_smtp_block_found_msg(): sending of email notifications is disabled.");
+		return;
+	} else
+	{
+		debug_log(LOG_INF, "send_smtp_block_found_msg(): attempting to send \'watchdog restarted\' email notification.");
+	}
+
+	memset(buf, 0, sizeof(buf));
+	memset(dateStr, 0, sizeof(dateStr));
+	memset(msgId, 0, sizeof(msgId));
+	memset(msgBody, 0, sizeof(msgBody));
+
+	build_smtp_msgId(msgId);
+	build_smtp_date(dateStr);
+
+	sprintf( msgBody, 
+		     "<html><body><font face=\"Courier\">Your miner solved a block. Yeah-maan!!!<br><br>%s<br></font></body></html>",
+			 SEND_DONATIONS_TO
+		   );
+
+	// date, email, email, email, email, msg ID, ip, restart datatime, version, ip, email, restart datetime
+	sprintf( buf, 
+		     MSG_FORMAT_NEW_BLOCK_FOUND, 
+			 dateStr,
+			 _smtp_email,_smtp_email,_smtp_email,_smtp_email,
+			 msgId,
+			 cfg->wdogRigName,
+			 WDOG_VERSION,
+			 cfg->wdogListenIP,
+			_smtp_email,
+			msgBody
+		);
+
+	msgLen = strlen(buf);
+	pMsg = (char *) calloc(1, msgLen+1);
+	if (pMsg == NULL)
+	{
+		debug_log(LOG_ERR, "send_smtp_block_found_msg(): failed to allocate memory for message object.");
+		return;
+	}
+
+	strncpy_s(pMsg, msgLen+1, buf, msgLen);
+
+	msg = (EmailMsg *) calloc(1, sizeof(EmailMsg));
+	if (msg == NULL)
+	{
+		debug_log(LOG_ERR, "send_smtp_block_found_msg(): failed to allocate memory for EmailMsg object.");
+		return;
+	}
+
+	msg->msgType = WDOG_NEW_BLOCK_EMAIL_TYPE;
+	msg->msg = pMsg;
+
+	_beginthread( sendEmailThread, 0, (void *) msg );
+} // end of send_smtp_block_found_msg()
+
 
 void send_smtp_restarted_msg(int reason)
 {
@@ -613,6 +687,9 @@ void sendEmailThread(void * pvMsg)
 
 	if (eMsg->msgType == WDOG_STATUS_EMAIL_TYPE)
 		debug_log(LOG_INF, "sendEmailThread(): sending \'Watchdog Status\' email message, len: %d", msgLen);
+
+	if (eMsg->msgType == WDOG_NEW_BLOCK_EMAIL_TYPE)
+		debug_log(LOG_INF, "sendEmailThread(): sending \'New Block Found\' email message, len: %d", msgLen);	
 
 start_again:
 

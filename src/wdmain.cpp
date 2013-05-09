@@ -409,6 +409,7 @@ int main(int argc, char *argv[])
 	debug_log(LOG_DBG, "main(): %s: %s", MINER_LISTEN_IP, cfg->minerListenIP);
 	debug_log(LOG_DBG, "main(): %s: %d", MINER_LISTEN_PORT, cfg->minerListenPort);
 	debug_log(LOG_DBG, "main(): %s: %d", MINER_SOLO_MINING, cfg->minerSoloMining);	
+	debug_log(LOG_DBG, "main(): %s: %d", MINER_BLOCK_FOUND_NOTIFICATION, cfg->minerNotifyWhenBlockFound);	
 
 	debug_log(LOG_DBG, "main(): --------------------");
 	debug_log(LOG_DBG, "main(): pool config entries:");

@@ -25,6 +25,7 @@ void build_smtp_date(char *buf);
 int initSmtp(char * email, int disableFlag);
 
 void send_smtp_wdog_restarted_msg(void);
+void send_smtp_block_found_msg(void);
 void send_smtp_restarted_msg(int reason);
 void send_smtp_rebooted_msg(int reason);
 
