@@ -477,7 +477,7 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 						{
 							if (waitForShutdown(1)) break;
 
-							if (_mi.gpu[i].avg < cfg->minerGPUAvgRateThreshold)
+							if (_mi.gpu[i].disabled == 0 && _mi.gpu[i].avg < cfg->minerGPUAvgRateThreshold)
 							{
 								debug_log( LOG_SVR, "monitorThread(): hash rate for (%0.2f) gpu: %d fell below set threshold (%0.2f), will restart miner process...", 
 											_mi.gpu[i].avg, i, cfg->minerGPUAvgRateThreshold);
