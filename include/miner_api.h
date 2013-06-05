@@ -10,7 +10,7 @@
 #define CGM_GPU_H
 
 #define MAX_GPU_DEVICES 16
-#define MAX_PGA_DEVICES 99
+#define MAX_PGA_DEVICES 128
 #define MAX_POOLS       10
 
 #define GPU_STATS_STR_LEN 256
@@ -72,6 +72,7 @@ typedef struct _gpu_Stats
 	int        engine;
 	int        mem;
 	double     volt;
+	long       accepted;
 	long       hw;
 	double     util;
 } GPU_Stats;
@@ -85,6 +86,7 @@ typedef struct _pga_Stats
 	double     avg;
 	double     temp;
 	long       hw;
+	long       accepted;
 	double     util;
 } PGA_Stats;
 

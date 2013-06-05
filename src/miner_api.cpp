@@ -391,6 +391,21 @@ void parseGPUStats(char * buf, GPU_Stats * stats)
 																				memset(temp, 0, sizeof(temp));
 																				strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
 																				stats->util = atof(temp);
+
+																				ptr = strstr(buf, "Accepted");
+																				if (ptr != NULL)
+																				{
+																					ptr += 10;
+																					// Accepted\":%d,\"Rejected
+																					ptrEnd = strstr(ptr, ",");
+																					if (ptrEnd != NULL)
+																					{
+																						memset(temp, 0, sizeof(temp));
+																						strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+																						stats->accepted = atol(temp);
+																					}
+																				}
+
 																			}
 																		}
 																	}
@@ -527,6 +542,21 @@ void parsePGAStats(char * buf, PGA_Stats * stats)
 												memset(temp, 0, sizeof(temp));
 												strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
 												stats->util = atof(temp);
+
+												ptr = strstr(buf, "Accepted");
+												if (ptr != NULL)
+												{
+													ptr += 10;
+													// Accepted\":%d,\"Rejected
+													ptrEnd = strstr(ptr, ",");
+													if (ptrEnd != NULL)
+													{
+														memset(temp, 0, sizeof(temp));
+														strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+														stats->accepted = atol(temp);
+													}
+												}
+
 											}
 										}
 									}
@@ -774,7 +804,7 @@ void parseMinerConfig(char * buf, Miner_Config * minerCfg)
 					strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
 					minerCfg->pgaCount = atoi(temp);
 
-					if (minerCfg->pgaCount > MAX_GPU_DEVICES)
+					if (minerCfg->pgaCount > MAX_PGA_DEVICES)
 					{
 						debug_log( LOG_SVR, 
 									"parseMinerConfig(): number of PGAs defined in cgminer (%d) is greater than %d PGAs supported by akbash, only the first %d PGAs will be monitored.",

@@ -104,6 +104,8 @@ void restartMiner(int cooldownPeriod, int reason)
 {
 	incrementRestartCount();
 
+	getProcessInfo(cfg->minerExeName, &gMinerProcessInfo);
+
 	if (shouldWeReboot(cfg))
 	{
 		debug_log(LOG_SVR, "restartMiner(): too many restart attempts, rebootting OS");

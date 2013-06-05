@@ -130,21 +130,30 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	getADLStats(&_adlInfo);
 
 	memset(status, 0, statusSize);
-	strcat_s(status, statusSize, "<html><body><font face=\"Courier\">");
-
 	memset(_temp, 0, sizeof(_temp));
+
+	sprintf_s( _temp, sizeof(_temp),
+		       "<html><title>%s</title><body><font face=\"Courier\">akbash version %s - Started: [%s]<br><br>",
+			   title,
+			   WDOG_VERSION,
+			   startedOn
+			);
+
+	strcat_s(status, statusSize, _temp);
+
 
 	// --------------
 	// Miner details.
 	// --------------
 	strcat_s(status, statusSize, "miner details:<br>--------------<br>");
 	sprintf_s( _temp, sizeof(_temp),
-		       "total avg: %.2f Mh/s, a: %d, r: %d, hw: %d, e: %.2f%%, u: %.2f/m, bs: %.2fK<br><br>",
+		       "total avg: %.2f Mh/s, a: %d, r: %d, hw: %d/%d (%.2f%%), u: %.2f/m, bs: %.2fK<br><br>",
 			   _mi.summary.mhsAvg, 
 			   _mi.summary.accepted, 
 			   _mi.summary.rejected,
 			   _mi.summary.hw, 
-			   _mi.summary.getworks ? _mi.summary.accepted*100.0/_mi.summary.getworks : 0,
+			   _mi.summary.accepted,
+			   ((float) _mi.summary.hw)/((float) _mi.summary.accepted + (float) _mi.summary.rejected)*100.0,
 			   _mi.summary.util,
 			   _mi.summary.bestshare			   
 			);
@@ -197,10 +206,10 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 		{
 			if (waitForShutdown(1)) break;
 
-			sprintf_s( _temp, sizeof(_temp), "gpu %d: %s (%s), %.2f Mh/s, %.0fC@%02d%%, %d/%d, hw: %d, u: %.2f/m<br>", 
+			sprintf_s( _temp, sizeof(_temp), "gpu %d: %s (%s), %.2f Mh/s, %.0fC@%02d%%, %d/%d, hw: %4/%d (%.2f%%), u: %.2f/m<br>", 
 					   _mi.gpu[i].id, gpuStatusStr(_mi.gpu[i].status), 
 					   _mi.gpu[i].disabled ? "OFF" : "ON",
-					   _mi.gpu[i].avg, _mi.gpu[i].temp, _mi.gpu[i].fan, _mi.gpu[i].engine, _mi.gpu[i].mem, _mi.gpu[i].hw, _mi.gpu[i].util
+					   _mi.gpu[i].avg, _mi.gpu[i].temp, _mi.gpu[i].fan, _mi.gpu[i].engine, _mi.gpu[i].mem, _mi.gpu[i].hw, _mi.gpu[i].accepted, 100.00*((float) _mi.gpu[i].hw) / ((float) _mi.gpu[i].accepted), _mi.gpu[i].util
 					 );
 
 			strcat_s(status, statusSize, _temp);
@@ -226,11 +235,11 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	{
 		if (waitForShutdown(1)) break;
 
-		sprintf_s( _temp, sizeof(_temp), "pga %d: %s (%s), %.2f Mh/s, %.0fC, hw: %4d, u: %.2f/m<br>", 
+		sprintf_s( _temp, sizeof(_temp), "pga %d: %s (%s), %.2f Mh/s, %.0fC, hw: %d/%d (%.2f%%), u: %.2f/m<br>", 
 			       _mi.pga[i].id, 
 				   gpuStatusStr(_mi.pga[i].status), 
 				   _mi.pga[i].disabled ? "OFF" : "ON",
-				   _mi.pga[i].avg, _mi.pga[i].temp, _mi.pga[i].hw, _mi.pga[i].util 
+				   _mi.pga[i].avg, _mi.pga[i].temp, _mi.pga[i].hw, _mi.pga[i].accepted, 100.00*((float) _mi.pga[i].hw) / ((float) _mi.pga[i].accepted), _mi.pga[i].util 
 				 );
 		strcat_s(status, statusSize, _temp);
 

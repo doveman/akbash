@@ -1,5 +1,6 @@
 # Object files
 *.o
+*.obj
 
 # Libraries
 *.lib
@@ -15,3 +16,23 @@
 *.exe
 *.out
 *.app
+
+# VS intermediate files
+*.tlog
+*.ilk
+*.pdb
+*.aps
+*.sdf
+*.suo
+*.manifest
+*.res
+*.lastbuildstate
+*.log
+*.cache
+*.bsc
+*.map
+*.zip
+*.ipch
+*.idb
+*.sbr
+

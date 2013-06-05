@@ -1,19 +1,22 @@
-Latest version:  1.0.8
+Latest version:  1.0.9
 ----------------------
 
-binaries: http://www.petermoss.com/akbash/1.0.8/akbash-1.0.8.zip
-sources:  http://www.petermoss.com/akbash/1.0.8/akbash-1.0.8-src.zip
+binaries: http://www.petermoss.com/akbash/1.0.9/akbash-1.0.9.zip
+git: https://github.com/af-newbie/akbash
 
-New in version 1.0.8:
+
+New in version 1.0.9:
 ---------------------
 
-	- added miner-solo-mining parameter to config file, 0 or 1 values. Set it to 1 when solo
-	  mining or when your pool acceptance is very low (high share difficulty or slow hash rate)
-	- added check to make sure that accepted shares are increasing when pool mining
-	- provided sample akbash config files for BTC and LTC mining	
-	- added support for both LTC and BTC quotes
-	- project has been released as an open source under GNU General Public License Version 3 or later
-      See GNULicenseV3.txt for more details.
+    - fixed a bug in display of PGA devices in web status page
+      Akbash was limiting number of devices to GPU limit, which is 16
+      instead of PGA limit of 128
+    - fixed problem with restarts due to disabled devices
+    - fixed a bug in remote restart logic
+    - added hardware errors, accepted and ratio of hardware errors as
+      a ratio of hw errors to accepted count.  Both email and status web page
+      have this new statistics
+    - removed efficiency (e:) from the status page, replaced with hw/accepted percentage
 
 To install:
 -----------
