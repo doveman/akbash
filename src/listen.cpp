@@ -42,6 +42,30 @@
 #define RESPONSE_SIZE 2048
 #define SERVICE_UNAVAILABLE "<html><body><font face=\"Courier\">Service unavailable.</font></body></html>"
 
+#define AKBASH_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Memory [MB]</td><td>Handle Count</td><td>Restart Count</td></tr><tr bgcolor=white><td>%d</td><td>%d</td><td>%d</td><td>%d/%d</td></tr></table><br>"
+#define MINER_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Accepted</td><td>Rejected</td><td>Hardware Errors</td><td>Utility</td><td>Best Share[K]</td></tr><tr bgcolor=white><td>%d</td><td>%s</td><td>%.2f</td><td>%d</td><td>%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td><td>%.2f</td></tr></table><br>"
+#define ADL_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Max Utilization</td><td>Min Temperature</td><td>Fans Status</td></tr><tr bgcolor=white><td>%d%%</td><td>%dC</td><td>%s</td></tr></table><br>"
+#define POOLSTATS_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Balance</td><td>Hash Rate [Mh/s]</td><td>Efficiency</td></tr><tr bgcolor=white><td>%0.5f</td><td>%0.2f</td><td>%0.2f%%</td></tr></table><br>"                                                                                                                                                              
+
+#define PGA_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Device</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Temp</td><td>Accepted</td><td>Hardware Errors</td><td>Utility</td></tr>"
+#define PGA_DETAILS_TEML_ROW   "<tr bgcolor=white><td>pga %d</td><td>%s (%s)</td><td>%.2f</td><td>%0.fC</td><td>%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td></tr>"
+#define PGA_DETAILS_TEML_LAST_ROW   "<tr bgcolor=white><td>Total PGA</td><td>&nbsp;</td><td>%.2f</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>%.2f</td></tr>"
+#define PGA_DETAILS_TEML_END   "</table><br>"
+
+#define GPU_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Device</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Temp</td><td>Engine/Memory</td><td>Hardware Errors</td><td>Utility</td></tr>"
+#define GPU_DETAILS_TEML_ROW   "<tr bgcolor=white><td>gpu %d</td><td>%s (%s)</td><td>%.2f</td><td>%0.fC@%02d%%</td><td>%d/%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td></tr>"
+#define GPU_DETAILS_TEML_LAST_ROW   "<tr bgcolor=white><td>Total GPU</td><td>&nbsp;</td><td>%.2f</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>%.2f</td></tr>"
+#define GPU_DETAILS_TEML_END   "</table><br>"
+
+#define POOL_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Pool</td><td>Status</td><td>Priority</td><td>URL</td></tr>"
+#define POOL_DETAILS_TEML_ROW   "<tr bgcolor=white><td>pool %d</td><td>%s (%s)</td><td>%d</td><td>%s</td></tr>"
+#define POOL_DETAILS_TEML_END   "</table><br>"
+
+#define CURRENCY_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Ticker</td><td>Bid</td><td>Ask</td><td>Last</td></tr>"
+#define CURRENCY_DETAILS_TEML_ROW   "<tr bgcolor=white><td>%s</td><td>$%0.2f</td><td> $%0.2f</td><td>$%0.2f</td></tr>"
+#define CURRENCY_DETAILS_TEML_END   "</table><br>"
+
+
 int restartCount = 0;
 
 void incrementRestartCount() { restartCount++; };
@@ -113,14 +137,14 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	cgmProcessInfo _minerProcessInfo;
 	cgmProcessInfo _akbashProcessInfo;
 	ADLInfo _adlInfo;
+	BTCInfo _btcInfo;
 
     char _temp[GPU_STATS_STR_LEN] = {0};
 	int i = 0;
 	int len = 0;
 	double avgTotal = 0.0;
 	double utilTotal = 0.0;
-
-	char ageStr[16];
+	PoolInfo poolStats;
 
 	getMinerStats(&_mi);
 
@@ -133,10 +157,21 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	memset(_temp, 0, sizeof(_temp));
 
 	sprintf_s( _temp, sizeof(_temp),
-		       "<html><title>%s</title><body><font face=\"Courier\">akbash version %s - Started: [%s]<br><br>",
+		       "<html><title>%s</title><body><font face=\"Courier\">akbash %s - Started: [%s]<br>",
 			   title,
 			   WDOG_VERSION,
 			   startedOn
+			);
+
+	strcat_s(status, statusSize, _temp);
+
+	sprintf_s( _temp, sizeof(_temp),
+			   AKBASH_DETAILS_TEMPL,
+			   _akbashProcessInfo.processID,
+			   _akbashProcessInfo.workingSetSize/1024/1024,
+			   _akbashProcessInfo.handleCount,
+	   		   restartCount, 
+               cfg->wdogNumberOfRestarts
 			);
 
 	strcat_s(status, statusSize, _temp);
@@ -145,11 +180,20 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	// --------------
 	// Miner details.
 	// --------------
-	strcat_s(status, statusSize, "miner details:<br>--------------<br>");
+	sprintf_s( _temp, sizeof(_temp),
+		       "%s - Started: [%s]<br>",
+			   _mi.summary.description,
+			   _mi.summary.startedOn
+			);
+
+	strcat_s(status, statusSize, _temp);
+
 	float ratio = (float) _mi.summary.accepted + (float) _mi.summary.rejected;
 
 	sprintf_s( _temp, sizeof(_temp),
-		       "total avg: %.2f Mh/s, a: %d, r: %d, hw: %d/%d (%.2f%%), u: %.2f/m, bs: %.2fK<br><br>",
+			   MINER_DETAILS_TEMPL,
+			   _minerProcessInfo.processID,
+			   gpuStatusStr(_mi.status),
 			   _mi.summary.mhsAvg, 
 			   _mi.summary.accepted, 
 			   _mi.summary.rejected,
@@ -162,53 +206,22 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 
 	strcat_s(status, statusSize, _temp);
 
-	sprintf_s( _temp, sizeof(_temp), 
-		       "age: %03d:%02d:%02d:%02d, ", 
-               _mi.summary.days, _mi.summary.hrs, _mi.summary.min, _mi.summary.secs
-			 );
-    strcat_s(status, statusSize, _temp);
-
-
-	sprintf_s( _temp, 
-		    sizeof(_temp),
-			"s: %s, rc: %d/%d pools: %d<br>",
-			gpuStatusStr(_mi.status),
-			restartCount, 
-			cfg->wdogNumberOfRestarts,
-			_mi.config.poolCount
-		);
-
-	strcat_s(status, statusSize, _temp);
-
-
-	sprintf_s( _temp, 
-		       sizeof(_temp),
-		     "pid: %d, ws: %u/%u, ", 
-			 _minerProcessInfo.processID,			 
-			 _minerProcessInfo.workingSetSize/1024/1024,
-			 cfg->minerWorkingSetThreshold/1024/1024
-		   );
-	strcat_s(status, statusSize, _temp);
-
-	sprintf_s( _temp, 
-		       sizeof(_temp),
-		     "hc: %d/%u<br><br>", 
-			 _minerProcessInfo.handleCount,
-			 cfg->minerHandleCountThreshold
-		   );
-	strcat_s(status, statusSize, _temp);
-
 	*avg  = _mi.summary.mhsAvg;
 	*hw   = _mi.summary.hw;
 	*util = _mi.summary.util;
 
+	strcat_s(status, statusSize, "Monitored devices:<br>");
+	
 	if (_mi.config.gpuCount > 0)
 	{
+	    strcat_s(status, statusSize, GPU_DETAILS_TEML_BEGIN);
+		
 		for (i=0; i < _mi.config.gpuCount; i++)
 		{
 			if (waitForShutdown(1)) break;
 
-			sprintf_s( _temp, sizeof(_temp), "gpu %d: %s (%s), %.2f Mh/s, %.0fC@%02d%%, %d/%d, hw: %d/%d (%.2f%%), u: %.2f/m<br>", 
+			sprintf_s( _temp, sizeof(_temp), 
+				       GPU_DETAILS_TEML_ROW,
 					   _mi.gpu[i].id, gpuStatusStr(_mi.gpu[i].status), 
 					   _mi.gpu[i].disabled ? "OFF" : "ON",
 					   _mi.gpu[i].avg, _mi.gpu[i].temp, _mi.gpu[i].fan, _mi.gpu[i].engine, _mi.gpu[i].mem, _mi.gpu[i].hw, _mi.gpu[i].accepted, 
@@ -224,74 +237,86 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 		if (waitForShutdown(1)) return;
 
 		sprintf_s( _temp, sizeof(_temp),
-		    "total GPU avg: %.2f Mh/s, u: %.2f/m<br><br>",
+			GPU_DETAILS_TEML_LAST_ROW,
 			avgTotal, 
 			utilTotal
 		);
 
 		strcat_s(status, statusSize, _temp);
+
+		strcat_s(status, statusSize, GPU_DETAILS_TEML_END);
 	}
 
 	avgTotal = 0.0;
 	utilTotal = 0.0;
 
-	for (i=0; i < _mi.config.pgaCount; i++)
-	{
-		if (waitForShutdown(1)) break;
-
-		sprintf_s( _temp, sizeof(_temp), "pga %d: %s (%s), %.2f Mh/s, %.0fC, hw: %d/%d (%.2f%%), u: %.2f/m<br>", 
-			       _mi.pga[i].id, 
-				   gpuStatusStr(_mi.pga[i].status), 
-				   _mi.pga[i].disabled ? "OFF" : "ON",
-				   _mi.pga[i].avg, _mi.pga[i].temp, _mi.pga[i].hw, _mi.pga[i].accepted, 
-				   _mi.pga[i].accepted ? 100.00*((float) _mi.pga[i].hw) / ((float) _mi.pga[i].accepted) : 0.00, _mi.pga[i].util 
-				 );
-		strcat_s(status, statusSize, _temp);
-
-		avgTotal += _mi.pga[i].avg;
-		utilTotal += _mi.pga[i].util;
-	}
-
 	if (_mi.config.pgaCount > 0)
 	{
+		strcat_s(status, statusSize, PGA_DETAILS_TEML_BEGIN);
+
+		for (i=0; i < _mi.config.pgaCount; i++)
+		{
+			if (waitForShutdown(1)) break;
+
+			sprintf_s( _temp, sizeof(_temp), 
+					   PGA_DETAILS_TEML_ROW,
+					   _mi.pga[i].id, 
+					   gpuStatusStr(_mi.pga[i].status), 
+					   _mi.pga[i].disabled ? "OFF" : "ON",
+					   _mi.pga[i].avg, _mi.pga[i].temp, _mi.pga[i].accepted, _mi.pga[i].hw, _mi.pga[i].accepted, 
+					   _mi.pga[i].accepted ? 100.00*((float) _mi.pga[i].hw) / ((float) _mi.pga[i].accepted) : 0.00, _mi.pga[i].util 
+					 );
+			strcat_s(status, statusSize, _temp);
+
+			avgTotal += _mi.pga[i].avg;
+			utilTotal += _mi.pga[i].util;
+		}
+
 		sprintf_s( _temp, sizeof(_temp),
-		    "total PGA avg: %.2f Mh/s, u: %.2f/m<br><br>",
+			PGA_DETAILS_TEML_LAST_ROW,
 			avgTotal, 
 			utilTotal
 		);
 
 		strcat_s(status, statusSize, _temp);
+
+		strcat_s(status, statusSize, PGA_DETAILS_TEML_END);
 	}
 
 	if (_mi.config.poolCount > 0)
 	{
+		strcat_s(status, statusSize, "Configured pools:<br>");
+
+		strcat_s(status, statusSize, POOL_DETAILS_TEML_BEGIN);
+
 		for (i=0; i < _mi.config.poolCount; i++)
-		{
+		{	
 			sprintf_s( _temp, sizeof(_temp),
-				"pool: %d, p: %d, url: %s, s: %s<br>",
+				POOL_DETAILS_TEML_ROW,
 				_mi.pools[i].id, 
+				_mi.pools[i].status,
+				_mi.pools[i].priority == 0 ? "Connected" : "Failover",
 				_mi.pools[i].priority,
-				_mi.pools[i].url,
-				_mi.pools[i].status
+				_mi.pools[i].url
 			);
 
 			strcat_s(status, statusSize, _temp);
 		}
+		strcat_s(status, statusSize, POOL_DETAILS_TEML_END);
 	}
 
-		// --------------------
+    // --------------------
 	// AMD GPU H/W details.
 	// --------------------
 	if (cfg->wdogAdlDisabled == 0)
 	{
-		strcat_s(status, statusSize, "<br>amd gpu h/w details:<br>--------------------<br>");
-
+		strcat_s(status, statusSize, "ADL details:<br>");
 		sprintf_s( _temp, 
 				sizeof(_temp),
-				"u: %d%%, t: %dC, fans ok: %s<br>", 
+				ADL_DETAILS_TEMPL,
 				_adlInfo.iMinActivity,
 				_adlInfo.iMaxTemp,
-				_adlInfo.iZeroFan == 0 ? "yes" : "<b>no!!!</b>"
+				_adlInfo.iZeroFan == 0 ? "OK" : "<b>NO</b>"
 			);
 
 		strcat_s(status, statusSize, _temp);
@@ -303,60 +328,67 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 		// -------------
 		// Pool details.
 		// -------------
-		sprintf_s(_temp, sizeof(_temp), "<br>pool (%s) statistics:<br>", cfg->poolHost);
+		sprintf_s(_temp, sizeof(_temp), "Pool (%s) statistics:<br>", cfg->poolHost);
 		strcat_s(status, statusSize, _temp);
 	
-		len = strlen(cfg->poolHost);
+		getPoolStats(&poolStats);
 
-		len += 19;
+		long total = poolStats.valids+poolStats.stales+poolStats.invalids;
+		sprintf_s( _temp, 
+				   sizeof(_temp),
+				   POOLSTATS_DETAILS_TEMPL,
+				   poolStats.balance,
+				   poolStats.hashrate,
+				   total == 0 ? 0.00 : poolStats.valids*100.00/total
+			);
 
-		for (i=0; i < len; i++)
-			strcat_s(status, statusSize, "-");
-	
-		strcat_s(status, statusSize, "<br>");
-
-		getPoolStatsStr(_temp);
 		strcat_s(status, statusSize, _temp);
-		strcat_s(status, statusSize, "<br>");
 	}
 
 	if (cfg->btcQuotesDisabled == 0 || cfg->ltcQuotesDisabled == 0)
-		strcat_s(status, statusSize, "<br>currency quotes:<br>----------------<br>");
-
-	if (cfg->btcQuotesDisabled == 0)
 	{
-		// -----------
-		// BTC quotes.
-		// -----------
-		getBTCStatsStr(_temp);
-		strcat_s(status, statusSize, _temp);
-	}
+		strcat_s(status, statusSize, "Currency quotes:<br>");
+	
+		strcat_s(status, statusSize, CURRENCY_DETAILS_TEML_BEGIN);
 
-	if (cfg->ltcQuotesDisabled == 0)
-	{
-		// -----------
-		// LTC quotes.
-		// -----------
-		getLTCStatsStr(_temp);
 		if (cfg->btcQuotesDisabled == 0)
-			strcat_s(status, statusSize, "<br>");
+		{
+			// -----------
+			// BTC quotes.
+			// -----------
+			getBTCStats(&_btcInfo);
+			sprintf_s( _temp, 
+					   sizeof(_temp),
+					   CURRENCY_DETAILS_TEML_ROW,
+					   "BTC",
+					   _btcInfo.bid,
+				       _btcInfo.ask,
+					   _btcInfo.last
+				);
 
-		strcat_s(status, statusSize, _temp);
+			strcat_s(status, statusSize, _temp);
+		}
+
+		if (cfg->ltcQuotesDisabled == 0)
+		{
+			// -----------
+			// LTC quotes.
+			// -----------
+			getLTCStats(&_btcInfo);
+			sprintf_s( _temp, 
+					   sizeof(_temp),
+					   CURRENCY_DETAILS_TEML_ROW,
+					   "LTC",
+					   _btcInfo.bid,
+				       _btcInfo.ask,
+					   _btcInfo.last
+				);
+
+			strcat_s(status, statusSize, _temp);
+		}
+
+		strcat_s(status, statusSize, CURRENCY_DETAILS_TEML_END);
 	}
-
-	// -----------------
-	// Watchdog details.
-	// -----------------
-	age(ageStr, sizeof(ageStr));
-	sprintf_s( _temp, 
-		       sizeof(_temp),
-		     "<br><br>watchdog details:<br>-----------------<br>pid: %d, ws: %d, hc: %d, age: %s<br>",
-			 _akbashProcessInfo.processID,
-			 _akbashProcessInfo.workingSetSize/1024/1024,
-			 _akbashProcessInfo.handleCount,
-			 ageStr
-		   );
-	strcat_s(status, statusSize, _temp);
 
 	strcat_s(status,  statusSize, "<br><br></font></body></html>");
 

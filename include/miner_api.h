@@ -13,11 +13,7 @@
 #define MAX_PGA_DEVICES 128
 #define MAX_POOLS       10
 
-#define GPU_STATS_STR_LEN 256
-//#define GPU_STATS_FORMAT "gpu%d: %s, %.1f Mh/s, %.0fC@%d%%, %d/%d, hw: %d, u: %.2f/m"
-
-#define PGA_STATS_STR_LEN 256
-//#define PGA_STATS_FORMAT "pga%d: %s, %.1f Mh/s, %.0fC, hw: %d, u: %.2f/m"
+#define GPU_STATS_STR_LEN 1024
 
 typedef struct
 {
@@ -47,6 +43,7 @@ typedef enum GPU_STATUS
 typedef struct _gpu_Summary
 {
 	char   version[32];
+	char   description[64];
 	char   startedOn[20];
 	int    days;
 	int    hrs;

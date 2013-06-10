@@ -577,6 +577,8 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 	char * ptr = NULL;
 	char * ptrEnd = NULL;
 	int i = 0;
+	int len = 0;
+	int j = 0;
 	char * start = buf;
 
 	for (i=0; i < mi->config.poolCount; i++)
@@ -615,7 +617,18 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 							if (ptrEnd != NULL)
 							{
 								start = ptrEnd;
-								strncpy_s(mi->pools[i].status, sizeof(mi->pools[i].status), ptr, ptrEnd-ptr);
+
+                                memset(temp, 0, sizeof(temp));
+                                strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+
+								//strncpy_s(mi->pools[i].status, sizeof(mi->pools[i].status), ptr, ptrEnd-ptr);
+
+								len = strlen(temp);
+								for (j=0; j < len; j++)
+								{
+									mi->pools[i].status[j] = toupper(temp[j]);
+								}
+								mi->pools[i].status[len] = 0;
 
 								ptr = strstr(start, "\"Priority\":");
 								if (ptr != NULL)
@@ -927,6 +940,20 @@ void parseGPUSummary(char * buf, GPU_Summary * sum)
 //{"STATUS":[{"STATUS":"S","Code":11,"Msg":"Summary","Description":"cgminer 2.3.1"}],
 //"SUMMARY":[{"Elapsed":326,"MHS av":1992.95,"Found Blocks":0,"Getworks":170,"Accepted":162,"Rejected":0,"Hardware Errors":0,"Utility":29.79,"Discarded":3,"Stale":0,"Get Failures":0,"Local Work":0,"Remote Failures":0,"Network Blocks":1,"Total MH
 //":650217.7833}]
+
+                    ptr = strstr(buf, "Description");
+
+					if (ptr != NULL)
+					{
+						ptr += 14;
+
+						ptrEnd = strstr(ptr, "\"");
+						if (ptrEnd != NULL)
+						{
+							memset(sum->description, 0, sizeof(sum->description));
+							strncpy_s(sum->description, sizeof(sum->description), ptr, ptrEnd-ptr);							
+						}
+					}
 
 					ptr = strstr(buf, "MHS av");
 					if (ptr != NULL)

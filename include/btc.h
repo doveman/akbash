@@ -20,6 +20,9 @@ typedef struct _BTCInfo
 void getBTCStatsStr(char * buf);
 void getLTCStatsStr(char * buf);
 
+void getBTCStats(BTCInfo * btc);
+void getLTCStats(BTCInfo * ltc);
+
 DWORD WINAPI btcQuotesThread(LPVOID pvParam);
 DWORD WINAPI ltcQuotesThread(LPVOID pvParam);
 
