@@ -2,21 +2,21 @@ Latest version:  1.0.9
 ----------------------
 
 binaries: http://www.petermoss.com/akbash/1.0.9/akbash-1.0.9.zip
-git: https://github.com/af-newbie/akbash
+source code: https://github.com/af-newbie/akbash
 
 
 New in version 1.0.9:
 ---------------------
 
-    - fixed a bug in display of PGA devices in web status page
-      Akbash was limiting number of devices to GPU limit, which is 16
-      instead of PGA limit of 128
+    - fixed a bug in display of PGA devices in web status page; Akbash was 
+	  limiting number of devices to GPU limit, which is 16 instead of PGA limit of 128
     - fixed problem with restarts due to disabled devices
     - fixed a bug in remote restart logic
     - added hardware errors, accepted and ratio of hardware errors as
       a ratio of hw errors to accepted count.  Both email and status web page
       have this new statistics
     - removed efficiency (e:) from the status page, replaced with hw/accepted percentage
+	- reformatted web/email status pages to a more readable, table format
 
 To install:
 -----------
@@ -38,7 +38,6 @@ The following fields must be updated:
 "miner-exe-name" : "cgminer.exe",
 "miner-listen-ip" : "127.0.0.1", 
 "miner-listen-port" : "4033", 
-"miner-solo-mining" : "1",
 
 cgminer/bfgminer config file has to be updated with:
 "api-port" : "4033",
@@ -58,38 +57,7 @@ point your browser to http://your_listen_ip:listen_port/wd_cmd=status;
 
 You should be getting something similar to:
 
-miner details:
---------------
-total avg: 1.00 Mh/s, a: 426, hw: 0, e: 373.68%, u: 4.99/m
-
-age: 000:01:25:27, s: ALIVE, rc: 1/15 pools: 4
-pid: 2868, ws: 55/904, hc: 5570/15000
-
-gpu 0: ALIVE (ON), 0.51 Mh/s, 74C@66%, 950/1300, hw: 1, u: 2.67/m
-gpu 1: ALIVE (ON), 0.49 Mh/s, 74C@53%, 910/1100, hw: 0, u: 2.32/m
-total GPU avg: 1.00 Mh/s, u: 4.99/m
-
-pool: 0, p: 0, url: http://notroll.in:6332, s: Alive
-pool: 1, p: 1, url: http://coinotron.com:3334, s: Alive
-pool: 2, p: 2, url: http://newlc.ozco.in:9332, s: Alive
-pool: 3, p: 3, url: http://newlc.ozco.in:80, s: Alive
-
-amd gpu h/w details:
---------------------
-u: 99%, t: 73C, fans ok: yes
-
-pool (notroll.in) statistics:
------------------------------
-balance: 5.86712, avg: 1010.13 Mh/s, e: 0.00%
-
-currency quotes:
-----------------
-BTC: bid/ask: $103.50/$103.90, last: $103.50
-LTC: bid/ask: $3.11/$3.13, last: $3.13
-
-watchdog details:
------------------
-pid: 3700, ws: 9, hc: 377, age: 000:01:26:06
+http://www.petermoss.com/akbash/1.0.9/akbash-1.0.9-status.png
 
 To build from sources:
 ----------------------
