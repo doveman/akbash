@@ -598,7 +598,7 @@ init_smtp:
 		if (_minerProcessInfo.processID == 0)
 		{
 			debug_log(LOG_SVR, "main(): miner is not running...restarting");
-			restartMiner(DEFAULT_RESTART_DELAY, WDOG_RESTART_MINER_NOT_RUNNING);
+			restartMiner(DEFAULT_RESTART_DELAY, WDOG_RESTART_MINER_NOT_RUNNING, -1);
 		
 			debug_log(LOG_SVR, "main(): waiting %d seconds for miner to settle down...", cfg->minerInitInterval);
 			Sleep(cfg->minerInitInterval*1000);
@@ -624,7 +624,7 @@ init_smtp:
 		if (_mi.config.gpuCount < 1 && _mi.config.pgaCount < 1)
 		{
 			debug_log(LOG_SVR, "main(): unable to retrieve number of devices (GPU/PGA), attempting to restart miner...");
-			restartMiner(DEFAULT_RESTART_DELAY, WDOG_RESTART_MINER_NOT_RUNNING);
+			restartMiner(DEFAULT_RESTART_DELAY, WDOG_RESTART_MINER_NOT_RUNNING, -1);
 		
 			debug_log(LOG_SVR, "main(): waiting %d seconds for miner to settle down...", cfg->minerInitInterval);
 			Sleep(cfg->minerInitInterval*1000);

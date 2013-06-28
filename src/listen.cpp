@@ -52,7 +52,7 @@
 #define PGA_DETAILS_TEML_LAST_ROW   "<tr bgcolor=white><td>Total PGA</td><td>&nbsp;</td><td>%.2f</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>%.2f</td></tr>"
 #define PGA_DETAILS_TEML_END   "</table><br>"
 
-#define GPU_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Device</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Temp</td><td>Engine/Memory</td><td>Hardware Errors</td><td>Utility</td></tr>"
+#define GPU_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Device</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Temp/Fan</td><td>Engine/Memory</td><td>Hardware Errors</td><td>Utility</td></tr>"
 #define GPU_DETAILS_TEML_ROW   "<tr bgcolor=white><td>gpu %d</td><td>%s (%s)</td><td>%.2f</td><td>%0.fC@%02d%%</td><td>%d/%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td></tr>"
 #define GPU_DETAILS_TEML_LAST_ROW   "<tr bgcolor=white><td>Total GPU</td><td>&nbsp;</td><td>%.2f</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>%.2f</td></tr>"
 #define GPU_DETAILS_TEML_END   "</table><br>"
@@ -859,7 +859,7 @@ tend:
 		}
 
 		if (restartCmdReceived)
-			restartMiner(DEFAULT_RESTART_DELAY, WDOG_RESTART_VIA_HTTP);  // 5 seconds delay
+			restartMiner(DEFAULT_RESTART_DELAY, WDOG_RESTART_VIA_HTTP, -1);  // 5 seconds delay
 
 	} // while (shutdown == 0)
 

@@ -20,7 +20,7 @@ enum GPU_STATUS gCurrStatus = NOT_STARTED;
 
 cgmProcessInfo gMinerProcessInfo;
 
-void formatReasons(char * buf, int bufSize, int reason)
+void formatReasons(char * buf, int bufSize, int reason, int device)
 {
 	char p[256];
 
@@ -43,7 +43,11 @@ void formatReasons(char * buf, int bufSize, int reason)
 
     if (reason & WDOG_RESTART_GPU_HASH_THRESHOLD)       
 	{
-		sprintf_s(p, sizeof(p), "WDOG_RESTART_GPU_HASH_THRESHOLD (%.2f)<br>", cfg->minerGPUAvgRateThreshold);
+		if (device > -1)
+			sprintf_s(p, sizeof(p), "WDOG_RESTART_GPU_HASH_THRESHOLD (%.2f), GPU: %d<br>", cfg->minerGPUAvgRateThreshold, device);
+		else
+			sprintf_s(p, sizeof(p), "WDOG_RESTART_GPU_HASH_THRESHOLD (%.2f)<br>", cfg->minerGPUAvgRateThreshold);
+
 		strcat(buf, p);
 	}
 
@@ -68,7 +72,11 @@ void formatReasons(char * buf, int bufSize, int reason)
 	
 	if (reason & WDOG_RESTART_PGA_HASH_THRESHOLD) 
 	{
-		sprintf_s(p, sizeof(p), "WDOG_RESTART_PGA_HASH_THRESHOLD (%.2f)<br>", cfg->minerPGAAvgRateThreshold);	
+		if (device > -1)
+			sprintf_s(p, sizeof(p), "WDOG_RESTART_PGA_HASH_THRESHOLD (%.2f), PGA: %d<br>", cfg->minerPGAAvgRateThreshold, device);	
+		else
+			sprintf_s(p, sizeof(p), "WDOG_RESTART_PGA_HASH_THRESHOLD (%.2f)<br>", cfg->minerPGAAvgRateThreshold);	
+
 		strcat(buf, p);
 	}
 
@@ -100,7 +108,7 @@ void formatReasons(char * buf, int bufSize, int reason)
 	}
 } // end of formatReasons()
 
-void restartMiner(int cooldownPeriod, int reason)
+void restartMiner(int cooldownPeriod, int reason, int device)
 {
 	incrementRestartCount();
 
@@ -144,7 +152,7 @@ void restartMiner(int cooldownPeriod, int reason)
 	
 	system(sysCmd);
 	
-	send_smtp_restarted_msg(reason);
+	send_smtp_restarted_msg(reason, device);
 	debug_log(LOG_INF, "restartMiner(): sleeping for %d seconds...", cfg->minerInitInterval);
 
 	restart = 0;
@@ -186,12 +194,14 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 	int restartDelay = DEFAULT_RESTART_DELAY; 
 	int restartReason = 0;
 	long lastAccepted = 0;
+	int faultyDevice = -1;
 
 	time(&notConnectedTimer); 
 
 	while (waitForShutdown(1) == 0)	
 	{
 		waitLeft = 30000;
+		faultyDevice = -1;
 
 		getProcessInfo(cfg->minerExeName, &gMinerProcessInfo);
 
@@ -484,6 +494,7 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 								debug_log( LOG_SVR, "monitorThread(): hash rate for (%0.2f) gpu: %d fell below set threshold (%0.2f), will restart miner process...", 
 											_mi.gpu[i].avg, i, cfg->minerGPUAvgRateThreshold);
 								restartReason |= WDOG_RESTART_GPU_HASH_THRESHOLD;
+								faultyDevice = i;
 								isAnyGpuHashBelowThreshold = 1;
 								break;
 							}
@@ -502,6 +513,7 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 							debug_log( LOG_SVR, "monitorThread(): hash rate (%0.2f) for pga: %d fell below set threshold (%0.2f), will restart miner process...",
 										_mi.pga[i].avg, i, cfg->minerPGAAvgRateThreshold);
 							restartReason |= WDOG_RESTART_PGA_HASH_THRESHOLD;
+							faultyDevice = i;
 							isAnyGpuHashBelowThreshold = 1;
 							break;
 						}
@@ -562,7 +574,7 @@ miner_restart_check:
 		{
 			if (waitForShutdown(1)) break;
 			
-			restartMiner(restartDelay, restartReason);
+			restartMiner(restartDelay, restartReason, faultyDevice);
 
 			restartDelay = DEFAULT_RESTART_DELAY;
 		}

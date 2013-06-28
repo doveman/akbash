@@ -211,7 +211,7 @@ void send_smtp_block_found_msg(void)
 } // end of send_smtp_block_found_msg()
 
 
-void send_smtp_restarted_msg(int reason)
+void send_smtp_restarted_msg(int reason, int device)
 {
 	char buf[SMTP_MAX_MSG_SIZE] = {0};
 	char dateStr[SMTP_MAX_DATE_LEN] = {0};
@@ -261,7 +261,7 @@ void send_smtp_restarted_msg(int reason)
 		   );
 
 
-	formatReasons(reasonsStr, sizeof(reasonsStr), reason);
+	formatReasons(reasonsStr, sizeof(reasonsStr), reason, device);
 
 	sprintf( msgBody, 
 		     "<html><body><font face=\"Courier\">Miner process has been restarted at: <br><br>%s<br><br>due the following reason:<br><br>%s<br><br>%s</font></body></html>",
@@ -353,7 +353,7 @@ void send_smtp_rebooted_msg(int reason)
 			 stTimeTm->tm_sec 
 		   );
 
-	formatReasons(reasonsStr, sizeof(reasonsStr), reason);
+	formatReasons(reasonsStr, sizeof(reasonsStr), reason, -1);
 
 	sprintf( msgBody, 
 		     "<html><body><font face=\"Courier\">OS is about to be rebooted at: <br><br>%s<br><br> due the following reason:<br><br>%s<br><br>%s</font></body></html>",

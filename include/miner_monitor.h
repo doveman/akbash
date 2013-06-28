@@ -36,9 +36,9 @@
 #define WDOG_RESTART_PGA_HAS_BEEN_DISABLED     262144 
 #define WDOG_RESTART_ACCEPTED_RATE_IS_FLAT     524288
 
-void formatReasons(char * buf, int bufSize, int reason);
+void formatReasons(char * buf, int bufSize, int reason, int device);
 
-void restartMiner(int delay, int reason);
+void restartMiner(int delay, int reason, int device);
 
 DWORD WINAPI monitorThread( LPVOID lpParam );
 
