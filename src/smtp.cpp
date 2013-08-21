@@ -158,7 +158,7 @@ void send_smtp_block_found_msg(void)
 		return;
 	} else
 	{
-		debug_log(LOG_INF, "send_smtp_block_found_msg(): attempting to send \'watchdog restarted\' email notification.");
+		debug_log(LOG_INF, "send_smtp_block_found_msg(): attempting to send \'block found\' email notification.");
 	}
 
 	memset(buf, 0, sizeof(buf));

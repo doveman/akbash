@@ -14,6 +14,7 @@
 #include "wdmain.h"
 #include "adl.h"
 #include "miner_monitor.h"
+#include "network.h"
 
 enum GPU_STATUS gPrevStatus = NOT_RUNNING;
 enum GPU_STATUS gCurrStatus = NOT_STARTED;
@@ -195,11 +196,37 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 	int restartReason = 0;
 	long lastAccepted = 0;
 	int faultyDevice = -1;
+	int diffcheckCount = 0;
+	double lastBestShare = 0;
+	double netDifficulty = 0;
 
 	time(&notConnectedTimer); 
 
 	while (waitForShutdown(1) == 0)	
 	{
+		if (diffcheckCount == 0 || diffcheckCount == 30) // check every 15 minutes
+		{
+			// check network difficulty
+			char * url = "https://blockchain.info/q/getdifficulty";
+			char diffStr[128];
+			double difficulty = 0;
+
+			memset(diffStr, 0, sizeof(diffStr));
+
+			net_get_url(url, diffStr, sizeof(diffStr));
+			
+			difficulty = atof(diffStr);
+
+			debug_log(	LOG_INF, "monitorThread(): network diff: %s (%f)", diffStr, difficulty); 
+					
+			if (difficulty > 0.0)
+				netDifficulty = difficulty;
+
+			if (diffcheckCount == 30)
+				diffcheckCount = 0;
+		}
+		diffcheckCount++;
+
 		waitLeft = 30000;
 		faultyDevice = -1;
 
@@ -459,10 +486,16 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 						// ---------------------------------------------------------------------------------------------------
 						if (cfg->minerNotifyWhenBlockFound == 1)
 						{
-							if (_mi.summary.accepted > lastAccepted)
+							debug_log( LOG_INF, "monitorThread(): network difficulty: %f, best share: %f", netDifficulty, _mi.summary.bestshare*1000);
+							double bestShare  = _mi.summary.bestshare*1000;
+							if (bestShare > netDifficulty)
 							{
-								lastAccepted = _mi.summary.accepted;
-								send_smtp_block_found_msg();
+								debug_log( LOG_INF, "monitorThread(): best share: %f > network difficulty: %f", _mi.summary.bestshare*1000, netDifficulty);
+								if (lastBestShare != bestShare)
+								{
+									send_smtp_block_found_msg();
+									lastBestShare = bestShare;
+								}
 							}
 						}
 					}
@@ -582,6 +615,8 @@ miner_restart_check:
 		if (waitForShutdown(1)) break;
 
 		wait(waitLeft);
+
+
 	}
 
 	debug_log(LOG_SVR, "monitorThread(): exiting thread: 0x%04x", GetCurrentThreadId());
