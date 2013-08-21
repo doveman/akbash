@@ -217,10 +217,13 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 			
 			difficulty = atof(diffStr);
 
-			debug_log(	LOG_INF, "monitorThread(): network diff: %s (%f)", diffStr, difficulty); 
+			debug_log(	LOG_INF, "monitorThread(): target difficulty: %f (%0.2fM)", difficulty, difficulty/1000000); 
 					
 			if (difficulty > 0.0)
+			{
 				netDifficulty = difficulty;
+				updateNetworkDifficulty(difficulty); // for email/webstatus
+			}
 
 			if (diffcheckCount == 30)
 				diffcheckCount = 0;
@@ -486,11 +489,11 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 						// ---------------------------------------------------------------------------------------------------
 						if (cfg->minerNotifyWhenBlockFound == 1)
 						{
-							debug_log( LOG_INF, "monitorThread(): network difficulty: %f, best share: %f", netDifficulty, _mi.summary.bestshare*1000);
+							debug_log( LOG_DBG, "monitorThread(): target difficulty: %f, best share: %f", netDifficulty, _mi.summary.bestshare*1000);
 							double bestShare  = _mi.summary.bestshare*1000;
 							if (bestShare > netDifficulty)
 							{
-								debug_log( LOG_INF, "monitorThread(): best share: %f > network difficulty: %f", _mi.summary.bestshare*1000, netDifficulty);
+								debug_log( LOG_DBG, "monitorThread(): best share: %f > target difficulty: %f", _mi.summary.bestshare*1000, netDifficulty);
 								if (lastBestShare != bestShare)
 								{
 									send_smtp_block_found_msg();
@@ -616,7 +619,8 @@ miner_restart_check:
 
 		wait(waitLeft);
 
-
+		if (diffcheckCount == 0)
+			updateNetworkDifficulty(netDifficulty); // for email/webstatus
 	}
 
 	debug_log(LOG_SVR, "monitorThread(): exiting thread: 0x%04x", GetCurrentThreadId());

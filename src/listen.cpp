@@ -42,8 +42,8 @@
 #define RESPONSE_SIZE 2048
 #define SERVICE_UNAVAILABLE "<html><body><font face=\"Courier\">Service unavailable.</font></body></html>"
 
-#define AKBASH_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Memory [MB]</td><td>Handle Count</td><td>Restart Count</td></tr><tr bgcolor=white><td>%d</td><td>%d</td><td>%d</td><td>%d/%d</td></tr></table><br>"
-#define MINER_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Accepted</td><td>Rejected</td><td>Hardware Errors</td><td>Utility</td><td>Best Share[K]</td></tr><tr bgcolor=white><td>%d</td><td>%s</td><td>%.2f</td><td>%d</td><td>%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td><td>%.2f</td></tr></table><br>"
+#define AKBASH_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Memory [MB]</td><td>Handle Count</td><td>Restart Count</td><td>Difficulty [M]</td></tr><tr bgcolor=white><td>%d</td><td>%d</td><td>%d</td><td>%d/%d</td><td>%0.2f</td></tr></table><br>"
+#define MINER_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Max Temp [C]</td><td>Accepted</td><td>Rejected</td><td>Hardware Errors</td><td>Utility</td><td>Best Share[M]</td></tr><tr bgcolor=white><td>%d</td><td>%s</td><td>%.2f</td><td>%.2f</td><td>%d</td><td>%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td><td>%.2f</td></tr></table><br>"
 #define ADL_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Max Utilization</td><td>Min Temperature</td><td>Fans Status</td></tr><tr bgcolor=white><td>%d%%</td><td>%dC</td><td>%s</td></tr></table><br>"
 #define POOLSTATS_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Balance</td><td>Hash Rate [Mh/s]</td><td>Efficiency</td></tr><tr bgcolor=white><td>%0.5f</td><td>%0.2f</td><td>%0.2f%%</td></tr></table><br>"                                                                                                                                                              
 
@@ -157,9 +157,10 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	memset(_temp, 0, sizeof(_temp));
 
 	sprintf_s( _temp, sizeof(_temp),
-		       "<html><title>%s</title><body><font face=\"Courier\">akbash %s - Started: [%s]<br>",
+		       "<html><title>%s</title><body><font face=\"Courier\">akbash %s (%s) - Started: [%s]<br>",
 			   title,
 			   WDOG_VERSION,
+			   cfg->wdogRigName,
 			   startedOn
 			);
 
@@ -171,7 +172,8 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 			   _akbashProcessInfo.workingSetSize/1024/1024,
 			   _akbashProcessInfo.handleCount,
 	   		   restartCount, 
-               cfg->wdogNumberOfRestarts
+               cfg->wdogNumberOfRestarts,
+			   _mi.summary.networkDifficulty/1000000 // in M
 			);
 
 	strcat_s(status, statusSize, _temp);
@@ -195,13 +197,14 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 			   _minerProcessInfo.processID,
 			   gpuStatusStr(_mi.status),
 			   _mi.summary.mhsAvg, 
+			   _mi.summary.maxTemp,
 			   _mi.summary.accepted, 
 			   _mi.summary.rejected,
 			   _mi.summary.hw, 
 			   _mi.summary.accepted,
 			   ratio ? ((float) _mi.summary.hw)/ratio*100.0 :  0.00,
 			   _mi.summary.util,
-			   _mi.summary.bestshare			   
+			   _mi.summary.bestshare/1000			   
 			);
 
 	strcat_s(status, statusSize, _temp);

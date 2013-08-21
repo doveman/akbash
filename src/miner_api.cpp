@@ -61,6 +61,21 @@ void updateMinerStats(Miner_Info * mi)
 	}
 }
 
+void updateNetworkDifficulty(double diff)
+{
+	if (getGpuMutex())
+	{
+		__try
+		{
+			gMinerInfo.summary.networkDifficulty = diff;
+		} __except(EXCEPTION_EXECUTE_HANDLER)
+		{
+		}
+			
+		releaseGpuMutex();
+	}
+}
+
 void getMinerStats(Miner_Info * mi)
 {
 	if (mi != NULL)
@@ -1083,6 +1098,7 @@ void fetchGPUSummary(GPU_Summary * sum)
 void fetchMinerInfo(Miner_Info * mi)
 {
 	int i = 0;
+	double maxTemp = 0;
 
 	resetMinerInfoObject(mi);	
 
@@ -1109,6 +1125,9 @@ void fetchMinerInfo(Miner_Info * mi)
 		// Get GPU stat.
 		// -------------
 		fetchGPUStats(i, &(mi->gpu[i]));
+		if (mi->gpu[i].temp > maxTemp)
+			maxTemp = mi->gpu[i].temp;
+
 		if (mi->gpu[i].disabled)
 		{
 			mi->summary.mhsAvg -= mi->gpu[i].avg;
@@ -1138,6 +1157,9 @@ void fetchMinerInfo(Miner_Info * mi)
 		// -------------
 		fetchPGAStats(i, &(mi->pga[i]));
 
+		if (mi->pga[i].temp > maxTemp)
+			maxTemp = mi->pga[i].temp;
+
 		if (mi->pga[i].status != ALIVE)
 		{
 			mi->status = mi->gpu[i].status;
@@ -1148,6 +1170,8 @@ void fetchMinerInfo(Miner_Info * mi)
 					 );
 		}
 	}
+
+	mi->summary.maxTemp = maxTemp;
 
 	// --------------
 	// Get POOL Stats.

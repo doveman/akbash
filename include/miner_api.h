@@ -56,6 +56,8 @@ typedef struct _gpu_Summary
 	long   getworks;
 	long   hw;
 	double util;
+	double networkDifficulty;
+	double maxTemp;
 } GPU_Summary;
 
 typedef struct _gpu_Stats
@@ -120,6 +122,7 @@ void switchPool(int pool);
 
 void displayMinerInfoObject(Miner_Info * mi);
 void fetchMinerInfo(Miner_Info * mi);
+void updateNetworkDifficulty(double diff);
 
 DWORD WINAPI minerApiThread( LPVOID lpParam );
 #endif
