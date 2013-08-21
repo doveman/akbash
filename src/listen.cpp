@@ -173,7 +173,7 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 			   _akbashProcessInfo.handleCount,
 	   		   restartCount, 
                cfg->wdogNumberOfRestarts,
-			   _mi.summary.networkDifficulty/1000000 // in M
+			   _mi.summary.targetDifficulty/1000000 // in M
 			);
 
 	strcat_s(status, statusSize, _temp);

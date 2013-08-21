@@ -196,40 +196,12 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 	int restartReason = 0;
 	long lastAccepted = 0;
 	int faultyDevice = -1;
-	int diffcheckCount = 0;
 	double lastBestShare = 0;
-	double netDifficulty = 0;
 
 	time(&notConnectedTimer); 
 
 	while (waitForShutdown(1) == 0)	
 	{
-		if (diffcheckCount == 0 || diffcheckCount == 30) // check every 15 minutes
-		{
-			// check network difficulty
-			char * url = "https://blockchain.info/q/getdifficulty";
-			char diffStr[128];
-			double difficulty = 0;
-
-			memset(diffStr, 0, sizeof(diffStr));
-
-			net_get_url(url, diffStr, sizeof(diffStr));
-			
-			difficulty = atof(diffStr);
-
-			debug_log(	LOG_INF, "monitorThread(): target difficulty: %f (%0.2fM)", difficulty, difficulty/1000000); 
-					
-			if (difficulty > 0.0)
-			{
-				netDifficulty = difficulty;
-				updateNetworkDifficulty(difficulty); // for email/webstatus
-			}
-
-			if (diffcheckCount == 30)
-				diffcheckCount = 0;
-		}
-		diffcheckCount++;
-
 		waitLeft = 30000;
 		faultyDevice = -1;
 
@@ -487,13 +459,13 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 						// ---------------------------------------------------------------------------------------------------
 						// Miner is solo mining, check if user wants to receive email notifications when a new block is found.
 						// ---------------------------------------------------------------------------------------------------
-						if (cfg->minerNotifyWhenBlockFound == 1)
+						if (cfg->minerNotifyWhenBlockFound == 1 && _mi.summary.targetDifficulty > 0)
 						{
-							debug_log( LOG_DBG, "monitorThread(): target difficulty: %f, best share: %f", netDifficulty, _mi.summary.bestshare*1000);
+							debug_log( LOG_DBG, "monitorThread(): target difficulty: %f, best share: %f", _mi.summary.targetDifficulty, _mi.summary.bestshare*1000);
 							double bestShare  = _mi.summary.bestshare*1000;
-							if (bestShare > netDifficulty)
+							if (bestShare > _mi.summary.targetDifficulty)
 							{
-								debug_log( LOG_DBG, "monitorThread(): best share: %f > target difficulty: %f", _mi.summary.bestshare*1000, netDifficulty);
+								debug_log( LOG_DBG, "monitorThread(): best share: %f > target difficulty: %f", _mi.summary.bestshare*1000, _mi.summary.targetDifficulty);
 								if (lastBestShare != bestShare)
 								{
 									send_smtp_block_found_msg();
@@ -618,9 +590,6 @@ miner_restart_check:
 		if (waitForShutdown(1)) break;
 
 		wait(waitLeft);
-
-		if (diffcheckCount == 0)
-			updateNetworkDifficulty(netDifficulty); // for email/webstatus
 	}
 
 	debug_log(LOG_SVR, "monitorThread(): exiting thread: 0x%04x", GetCurrentThreadId());

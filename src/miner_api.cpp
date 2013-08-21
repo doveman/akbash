@@ -61,21 +61,6 @@ void updateMinerStats(Miner_Info * mi)
 	}
 }
 
-void updateNetworkDifficulty(double diff)
-{
-	if (getGpuMutex())
-	{
-		__try
-		{
-			gMinerInfo.summary.networkDifficulty = diff;
-		} __except(EXCEPTION_EXECUTE_HANDLER)
-		{
-		}
-			
-		releaseGpuMutex();
-	}
-}
-
 void getMinerStats(Miner_Info * mi)
 {
 	if (mi != NULL)
@@ -1099,6 +1084,9 @@ void fetchMinerInfo(Miner_Info * mi)
 {
 	int i = 0;
 	double maxTemp = 0;
+	char * url = "https://blockchain.info/q/getdifficulty";
+	char diffStr[128];
+	double difficulty = 0;
 
 	resetMinerInfoObject(mi);	
 
@@ -1177,6 +1165,21 @@ void fetchMinerInfo(Miner_Info * mi)
 	// Get POOL Stats.
 	// --------------
 	fetchPoolStats(mi);
+
+
+	// get target difficulty
+	memset(diffStr, 0, sizeof(diffStr));
+
+	net_get_url(url, diffStr, sizeof(diffStr));
+			
+	difficulty = atof(diffStr);
+
+	debug_log(	LOG_INF, "fetchMinerInfo(): target difficulty: %f (%0.2fM)", difficulty, difficulty/1000000); 
+					
+	if (difficulty > 0.0)
+	{
+		mi->summary.targetDifficulty = difficulty;
+	}
 
 	// --------------------------------
 	// Update global miner info object.
