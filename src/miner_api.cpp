@@ -1174,7 +1174,7 @@ void fetchMinerInfo(Miner_Info * mi)
 			
 	difficulty = atof(diffStr);
 
-	debug_log(	LOG_INF, "fetchMinerInfo(): target difficulty: %f (%0.2fM)", difficulty, difficulty/1000000); 
+	debug_log(	LOG_DBG, "fetchMinerInfo(): target difficulty: %f (%0.2fM)", difficulty, difficulty/1000000); 
 					
 	if (difficulty > 0.0)
 	{
