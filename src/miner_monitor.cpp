@@ -196,7 +196,7 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 	int restartReason = 0;
 	long lastAccepted = 0;
 	int faultyDevice = -1;
-	double lastBestShare = 0;
+	double lastBlocksFoundCount = 0;
 
 	time(&notConnectedTimer); 
 
@@ -456,22 +456,30 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 						}
 					} else
 					{
-						// ---------------------------------------------------------------------------------------------------
-						// Miner is solo mining, check if user wants to receive email notifications when a new block is found.
-						// ---------------------------------------------------------------------------------------------------
-						if (cfg->minerNotifyWhenBlockFound == 1 && _mi.summary.targetDifficulty > 0)
+						// -----------------------------------------------------------------------------
+						// Check if user wants to receive email notifications when a new block is found.
+						// -----------------------------------------------------------------------------
+						if (cfg->minerNotifyWhenBlockFound == 1 && _mi.summary.foundBlocks > 0)
 						{
-							debug_log( LOG_DBG, "monitorThread(): target difficulty: %f, best share: %f", _mi.summary.targetDifficulty, _mi.summary.bestshare*1000);
+							debug_log( LOG_DBG, "monitorThread(): target difficulty: %f, best share: %f, last blocks found: %d, blocks found: %d", 
+								       _mi.summary.targetDifficulty, 
+									   _mi.summary.bestshare*1000,
+									   lastBlocksFoundCount,
+									   _mi.summary.foundBlocks
+									 );
+
 							double bestShare  = _mi.summary.bestshare*1000;
 							if (bestShare > _mi.summary.targetDifficulty)
 							{
 								debug_log( LOG_DBG, "monitorThread(): best share: %f > target difficulty: %f", _mi.summary.bestshare*1000, _mi.summary.targetDifficulty);
-								if (lastBestShare != bestShare)
-								{
-									send_smtp_block_found_msg();
-									lastBestShare = bestShare;
-								}
 							}
+							
+							if (_mi.summary.foundBlocks > lastBlocksFoundCount)
+							{
+								debug_log( LOG_DBG, "monitorThread(): sending \'Block Found\' email message...");
+								send_smtp_block_found_msg();
+								lastBlocksFoundCount = _mi.summary.foundBlocks;
+							}							
 						}
 					}
 

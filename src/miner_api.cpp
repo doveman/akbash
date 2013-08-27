@@ -98,7 +98,7 @@ void displayMinerInfoObject(Miner_Info * mi)
 {
 	int i = 0;
 
-	debug_log( LOG_DBG, "displayMinerInfoObject(): status: %s, gpus: %d, pgas: %d, a: %d, gw: %d, avg: %0.2f, hw: %d, since: %s, u: %0.2f, ver: %s, days: %d, hrs: %d, min: %d, secs: %d",
+	debug_log( LOG_DBG, "displayMinerInfoObject(): status: %s, gpus: %d, pgas: %d, a: %d, gw: %d, avg: %0.2f, hw: %d, since: %s, u: %0.2f, ver: %s, days: %d, hrs: %d, min: %d, secs: %d, found blocks: %d",
 		       gpuStatusStr(mi->status),
 			   mi->config.gpuCount,
 			   mi->config.pgaCount,
@@ -112,7 +112,8 @@ void displayMinerInfoObject(Miner_Info * mi)
 			   mi->summary.days,
 			   mi->summary.hrs,
 			   mi->summary.min,
-			   mi->summary.secs
+			   mi->summary.secs,
+			   mi->summary.foundBlocks
 		     );
 
 	for (i=0; i < mi->config.gpuCount; i++)	
@@ -1064,6 +1065,21 @@ void parseGPUSummary(char * buf, GPU_Summary * sum)
 			}
 		}
 	}
+
+	// "Found Blocks":1,
+	ptr = strstr(buf, "Found Blocks");
+	if (ptr != NULL)
+	{
+		ptr += 14;			
+		ptrEnd = strstr(ptr, ",");
+		if (ptrEnd != NULL)
+		{
+			memset(temp, 0, sizeof(temp));
+			strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+			sum->foundBlocks = atol(temp);
+		}
+	}
+
 } // end of parseGPUSummary()
 
 void fetchGPUSummary(GPU_Summary * sum)
@@ -1080,11 +1096,10 @@ void fetchGPUSummary(GPU_Summary * sum)
 
 } // end of fetchGPUSummary()
 
-void fetchMinerInfo(Miner_Info * mi)
+void fetchMinerInfo(Miner_Info * mi, CGMConfig * cfg)
 {
 	int i = 0;
 	double maxTemp = 0;
-	char * url = "https://blockchain.info/q/getdifficulty";
 	char diffStr[128];
 	double difficulty = 0;
 
@@ -1170,7 +1185,7 @@ void fetchMinerInfo(Miner_Info * mi)
 	// get target difficulty
 	memset(diffStr, 0, sizeof(diffStr));
 
-	net_get_url(url, diffStr, sizeof(diffStr));
+	net_get_url(cfg->minerTargetDifficultyUrl, diffStr, sizeof(diffStr));
 			
 	difficulty = atof(diffStr);
 
@@ -1205,7 +1220,7 @@ DWORD WINAPI minerApiThread( LPVOID lpParam )
 	while (waitForShutdown(1) == 0)  // while shutdown event is not set
 	{
 		debug_log(LOG_DBG, "minerApiThread(): woke up; checking miner status...");
-		fetchMinerInfo(&_minerInfo);
+		fetchMinerInfo(&_minerInfo, _cfg);
 
 		if (_minerInfo.status != ALIVE)
 		{

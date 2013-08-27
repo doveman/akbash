@@ -173,6 +173,7 @@ CGMConfig * parseConfigFile(const char * fileName)
 		const char * miner_solo_mining[] = { MINER_SOLO_MINING, (const char *) 0 };
 
 		const char * miner_block_found_notification[] = { MINER_BLOCK_FOUND_NOTIFICATION, (const char *) 0 };
+		const char * miner_target_difficulty_url[] = { MINER_TARGET_DIFFICULTY_URL, (const char *) 0 };
 
 		const char * number_of_restarts[] = { NUMBER_OF_RESTARTS, (const char *) 0 };
 		const char * alive_timeout[] = { ALIVE_TIMEOUT, (const char *) 0 };
@@ -489,7 +490,20 @@ CGMConfig * parseConfigFile(const char * fileName)
 			if (cgmConfig.minerHWErrorsThreshold < MIN_HW_ERRORS_THRESHOLD)
 				cgmConfig.minerHWErrorsThreshold = MIN_HW_ERRORS_THRESHOLD;
 		}
-		
+
+        v = yajl_tree_get(node, miner_target_difficulty_url, yajl_t_string);
+		if (v == NULL) 
+		{ 
+			cgmConfig.minerHWErrorsThreshold = MIN_HW_ERRORS_THRESHOLD;
+
+			strcpy_s(cgmConfig.minerTargetDifficultyUrl, sizeof(cgmConfig.minerTargetDifficultyUrl), "https://blockchain.info/q/getdifficulty");
+
+			fprintf(stderr, "\nparseConfigFile(): unable to find: \'%s\' field in the config file: \'%s\'. Defaulting to %s url\n", miner_target_difficulty_url[0], fileName, cgmConfig.minerTargetDifficultyUrl);
+		} else
+		{
+			strcpy_s(cgmConfig.minerTargetDifficultyUrl, sizeof(cgmConfig.minerTargetDifficultyUrl), YAJL_GET_STRING(v));
+		}
+
 		// -----------------
 		// Log file entries.
 		// -----------------

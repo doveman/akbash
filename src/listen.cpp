@@ -42,8 +42,8 @@
 #define RESPONSE_SIZE 2048
 #define SERVICE_UNAVAILABLE "<html><body><font face=\"Courier\">Service unavailable.</font></body></html>"
 
-#define AKBASH_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Memory [MB]</td><td>Handle Count</td><td>Restart Count</td><td>Difficulty [M]</td></tr><tr bgcolor=white><td>%d</td><td>%d</td><td>%d</td><td>%d/%d</td><td>%0.2f</td></tr></table><br>"
-#define MINER_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Max Temp [C]</td><td>Accepted</td><td>Rejected</td><td>Hardware Errors</td><td>Utility</td><td>Best Share[M]</td></tr><tr bgcolor=white><td>%d</td><td>%s</td><td>%.2f</td><td>%.2f</td><td>%d</td><td>%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td><td>%.2f</td></tr></table><br>"
+#define AKBASH_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Memory [MB]</td><td>Handle Count</td><td>Restart Count</td><td>Target Difficulty [M]</td></tr><tr bgcolor=white><td>%d</td><td>%d</td><td>%d</td><td>%d/%d</td><td>%0.2f</td></tr></table><br>"
+#define MINER_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Max Temp [C]</td><td>Accepted</td><td>Rejected</td><td>Solved Blocks</td><td>Utility</td><td>Best Share[M]</td></tr><tr bgcolor=white><td>%d</td><td>%s</td><td>%.2f</td><td>%.2f</td><td>%d</td><td>%d(%.2f%%)</td><td><center>%d</center></td><td>%.2f</td><td>%.2f</td></tr></table><br>"
 #define ADL_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Max Utilization</td><td>Min Temperature</td><td>Fans Status</td></tr><tr bgcolor=white><td>%d%%</td><td>%dC</td><td>%s</td></tr></table><br>"
 #define POOLSTATS_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Balance</td><td>Hash Rate [Mh/s]</td><td>Efficiency</td></tr><tr bgcolor=white><td>%0.5f</td><td>%0.2f</td><td>%0.2f%%</td></tr></table><br>"                                                                                                                                                              
 
@@ -192,17 +192,17 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 
 	float ratio = (float) _mi.summary.accepted + (float) _mi.summary.rejected;
 
+	
 	sprintf_s( _temp, sizeof(_temp),
 			   MINER_DETAILS_TEMPL,
-			   _minerProcessInfo.processID,
-			   gpuStatusStr(_mi.status),
-			   _mi.summary.mhsAvg, 
-			   _mi.summary.maxTemp,
-			   _mi.summary.accepted, 
+			   _minerProcessInfo.processID,  // PID
+			   gpuStatusStr(_mi.status),     // Status
+			   _mi.summary.mhsAvg,           // Hash Rate
+			   _mi.summary.maxTemp,          // Max Temperature
+			   _mi.summary.accepted,        
 			   _mi.summary.rejected,
-			   _mi.summary.hw, 
-			   _mi.summary.accepted,
-			   ratio ? ((float) _mi.summary.hw)/ratio*100.0 :  0.00,
+			   (float) ((float) _mi.summary.rejected / ((float) _mi.summary.rejected + _mi.summary.accepted)) * 100.00,
+			   _mi.summary.foundBlocks,
 			   _mi.summary.util,
 			   _mi.summary.bestshare/1000			   
 			);

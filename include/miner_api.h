@@ -9,11 +9,13 @@
 #ifndef CGM_GPU_H
 #define CGM_GPU_H
 
+#include "wdmain.h"
+
 #define MAX_GPU_DEVICES 16
-#define MAX_PGA_DEVICES 128
+#define MAX_PGA_DEVICES 384
 #define MAX_POOLS       10
 
-#define GPU_STATS_STR_LEN 1024
+#define GPU_STATS_STR_LEN 4096
 
 typedef struct
 {
@@ -57,6 +59,7 @@ typedef struct _gpu_Summary
 	long   hw;
 	double util;
 	double targetDifficulty;
+	int    foundBlocks;
 	double maxTemp;
 } GPU_Summary;
 
@@ -121,7 +124,7 @@ int enableGPUs(void);
 void switchPool(int pool);
 
 void displayMinerInfoObject(Miner_Info * mi);
-void fetchMinerInfo(Miner_Info * mi);
+void fetchMinerInfo(Miner_Info * mi, CGMConfig * cfg);
 
 DWORD WINAPI minerApiThread( LPVOID lpParam );
 #endif

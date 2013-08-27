@@ -1,22 +1,22 @@
-Latest version:  1.0.9
+Latest version:  1.0.11
 ----------------------
 
-binaries: http://www.petermoss.com/akbash/1.0.9/akbash-1.0.9.zip
+binary:  https://github.com/af-newbie/akbash/build
 source code: https://github.com/af-newbie/akbash
 
 
-New in version 1.0.9:
+New in version 1.0.11
 ---------------------
 
-    - fixed a bug in display of PGA devices in web status page; Akbash was 
-	  limiting number of devices to GPU limit, which is 16 instead of PGA limit of 128
-    - fixed problem with restarts due to disabled devices
-    - fixed a bug in remote restart logic
-    - added hardware errors, accepted and ratio of hardware errors as
-      a ratio of hw errors to accepted count.  Both email and status web page
-      have this new statistics
-    - removed efficiency (e:) from the status page, replaced with hw/accepted percentage
-	- reformatted web/email status pages to a more readable, table format
+    - reformatted the status page:
+	    - removed hardware errors (as they are meaningless in ASICs world)
+	    - added "Blocks Found" field
+		- added target difficulty field
+	- fixed "block found" email notifications
+	- increased number of supported PGA devices to 384 (equivalent of 3 mini rigs running on 
+	  the same miner instance).  Max supported GPUs is still 16.
+	- added "miner-target-difficulty-url" : "https://blockchain.info/q/getdifficulty" to a config file.
+
 
 To install:
 -----------
@@ -37,10 +37,10 @@ The following fields must be updated:
 "miner-exe-full-path" : "c:\\users\\admin\\desktop\\gpu\\cgminer-btc.lnk",
 "miner-exe-name" : "cgminer.exe",
 "miner-listen-ip" : "127.0.0.1", 
-"miner-listen-port" : "4033", 
+"miner-listen-port" : "4028", 
 
 cgminer/bfgminer config file has to be updated with:
-"api-port" : "4033",
+"api-port" : "4028",
 "api-listen" : true,
 "api-network" : true,
 "api-allow" : "W:127.0.0.1",
@@ -54,10 +54,6 @@ or
 c:\akbash\akbash akbash-ltc.conf
 
 point your browser to http://your_listen_ip:listen_port/wd_cmd=status;
-
-You should be getting something similar to:
-
-http://www.petermoss.com/akbash/1.0.9/akbash-1.0.9-status.png
 
 To build from sources:
 ----------------------

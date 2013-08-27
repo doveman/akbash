@@ -58,6 +58,7 @@
 #define MINER_LISTEN_PORT              "miner-listen-port"
 #define MINER_SOLO_MINING              "miner-solo-mining"
 #define MINER_BLOCK_FOUND_NOTIFICATION "miner-notify-when-block-found"
+#define MINER_TARGET_DIFFICULTY_URL    "miner-target-difficulty-url"
 
 // ---------------------
 // Pool related entries.
@@ -145,6 +146,8 @@ typedef struct _cgmConfig
 
 	char   minerListenIP[32];
     int    minerListenPort;
+
+	char   minerTargetDifficultyUrl[MAX_PATH+1];
 
 	int    poolInfoDisabled;
 	int    poolRefreshInterval;

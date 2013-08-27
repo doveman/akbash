@@ -125,6 +125,8 @@ miner-not-connected-timeout - akbash might lose connectivity with miner process 
 miner-hw-errors-threshold - if h/w errors as reported by miner API are greaterthan this threshold, miner will be restarted.
                             Minimum value is 0, also a default value.
 
+miner-notify-when-block-found - set it to 1 if you want to receive email notifications when your miner solves a block
+
 wdog-cutoff-temperature - if temperature of any GPU reaches this value at any time, miner will be stopped for "wdog-cutoff-temperature-cooldown-period"
                           minutes.  Default value is 86C.
 

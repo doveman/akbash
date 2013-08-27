@@ -410,7 +410,8 @@ int main(int argc, char *argv[])
 	debug_log(LOG_DBG, "main(): %s: %d", MINER_LISTEN_PORT, cfg->minerListenPort);
 	debug_log(LOG_DBG, "main(): %s: %d", MINER_SOLO_MINING, cfg->minerSoloMining);	
 	debug_log(LOG_DBG, "main(): %s: %d", MINER_BLOCK_FOUND_NOTIFICATION, cfg->minerNotifyWhenBlockFound);	
-
+	debug_log(LOG_DBG, "main(): %s: %s", MINER_TARGET_DIFFICULTY_URL, cfg->minerTargetDifficultyUrl);	
+	
 	debug_log(LOG_DBG, "main(): --------------------");
 	debug_log(LOG_DBG, "main(): pool config entries:");
     debug_log(LOG_DBG, "main(): --------------------");
@@ -612,14 +613,14 @@ init_smtp:
 	// -----------------------------------------
 	initMinerListeningParameters(cfg->minerListenIP, cfg->minerListenPort);
 	debug_log(LOG_INF, "main(): checking miner status...");
-	fetchMinerInfo(&_mi);
+	fetchMinerInfo(&_mi, cfg);
 
 	if (_mi.config.gpuCount < 1 && _mi.config.pgaCount < 1)
 	{
 		debug_log(LOG_SVR, "main(): unable to retrieve number of devices (GPU/PGA), waiting %d seconds for miner to initialize...", cfg->minerInitInterval);
 		Sleep(cfg->minerInitInterval*1000);
 
-		fetchMinerInfo(&_mi);
+		fetchMinerInfo(&_mi,cfg);
 
 		if (_mi.config.gpuCount < 1 && _mi.config.pgaCount < 1)
 		{
@@ -630,7 +631,7 @@ init_smtp:
 			Sleep(cfg->minerInitInterval*1000);
 		}
 
-		fetchMinerInfo(&_mi);
+		fetchMinerInfo(&_mi,cfg);
 	}
 
 	if (_mi.config.gpuCount < 1)
