@@ -39,15 +39,19 @@
 #define WEB_SWITCH_POOL  "switch_pool"
 #define WEB_HELP         "help"
 
+//JSONP
+#define WEB_JSONP_SUMMARY "jsonp_summary"
+
+
 #define RESPONSE_SIZE 2048
 #define SERVICE_UNAVAILABLE "<html><body><font face=\"Courier\">Service unavailable.</font></body></html>"
 
 #define AKBASH_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Memory [MB]</td><td>Handle Count</td><td>Restart Count</td><td>Target Difficulty [M]</td></tr><tr bgcolor=white><td>%d</td><td>%d</td><td>%d</td><td>%d/%d</td><td>%0.2f</td></tr></table><br>"
-#define MINER_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Max Temp [C]</td><td>Accepted</td><td>Rejected</td><td>Solved Blocks</td><td>Utility</td><td>Best Share[M]</td></tr><tr bgcolor=white><td>%d</td><td>%s</td><td>%.2f</td><td>%.2f</td><td>%d</td><td>%d(%.2f%%)</td><td><center>%d</center></td><td>%.2f</td><td>%.2f</td></tr></table><br>"
+#define MINER_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>PID</td><td>Status</td><td>Hash Rate [Gh/s]</td><td>Max Temp [C]</td><td>Accepted</td><td>Rejected</td><td>Blocks</td><td>Util</td><td>Best Share [M]</td><td>Pool Diff</td><td>Last Share</td></tr><tr bgcolor=white><td>%d</td><td>%s</td><td>%.2f</td><td>%.2f</td><td>%d</td><td>%d(%.2f%%)</td><td><center>%d</center></td><td>%.2f</td><td>%.2f</td><td>%d</td><td>%s</td></tr></table><br>"
 #define ADL_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Max Utilization</td><td>Min Temperature</td><td>Fans Status</td></tr><tr bgcolor=white><td>%d%%</td><td>%dC</td><td>%s</td></tr></table><br>"
-#define POOLSTATS_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Balance</td><td>Hash Rate [Mh/s]</td><td>Efficiency</td></tr><tr bgcolor=white><td>%0.5f</td><td>%0.2f</td><td>%0.2f%%</td></tr></table><br>"                                                                                                                                                              
+#define POOLSTATS_DETAILS_TEMPL "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Balance</td><td>Hash Rate [Gh/s]</td><td>Efficiency</td></tr><tr bgcolor=white><td>%0.5f</td><td>%0.2f</td><td>%0.2f%%</td></tr></table><br>"                                                                                                                                                              
 
-#define PGA_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Device</td><td>Status</td><td>Hash Rate [Mh/s]</td><td>Temp</td><td>Accepted</td><td>Hardware Errors</td><td>Utility</td></tr>"
+#define PGA_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Device</td><td>Status</td><td>Hash Rate [Gh/s]</td><td>Temp</td><td>Accepted</td><td>Hardware Errors</td><td>Utility</td></tr>"
 #define PGA_DETAILS_TEML_ROW   "<tr bgcolor=white><td>pga %d</td><td>%s (%s)</td><td>%.2f</td><td>%0.fC</td><td>%d</td><td>%d/%d (%.2f%%)</td><td>%.2f</td></tr>"
 #define PGA_DETAILS_TEML_LAST_ROW   "<tr bgcolor=white><td>Total PGA</td><td>&nbsp;</td><td>%.2f</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>%.2f</td></tr>"
 #define PGA_DETAILS_TEML_END   "</table><br>"
@@ -57,8 +61,8 @@
 #define GPU_DETAILS_TEML_LAST_ROW   "<tr bgcolor=white><td>Total GPU</td><td>&nbsp;</td><td>%.2f</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>%.2f</td></tr>"
 #define GPU_DETAILS_TEML_END   "</table><br>"
 
-#define POOL_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Pool</td><td>Status</td><td>Priority</td><td>URL</td></tr>"
-#define POOL_DETAILS_TEML_ROW   "<tr bgcolor=white><td>pool %d</td><td>%s (%s)</td><td>%d</td><td>%s</td></tr>"
+#define POOL_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Pool</td><td>Status</td><td>Priority</td><td>URL</td><td>Difficulty</td><td>Last Activity</td></tr>"
+#define POOL_DETAILS_TEML_ROW   "<tr bgcolor=white><td>pool %d</td><td>%s (%s)</td><td>%d</td><td>%s</td><td>%d</td><td>%s</td></tr>"
 #define POOL_DETAILS_TEML_END   "</table><br>"
 
 #define CURRENCY_DETAILS_TEML_BEGIN "<table cellpadding=2 border=1><tr bgcolor=#C0C0C0><td>Ticker</td><td>Bid</td><td>Ask</td><td>Last</td></tr>"
@@ -131,6 +135,69 @@ void reboot(int reason)
 	rc = systemReboot();
 }
 
+void getJsonpStatus(char * status, int statusSize, char * params)
+{
+	POOL_Stats pool;
+	char * ptr = NULL;
+	char * ptrEnd = NULL;
+	int index = -1;
+	char temp[128];
+
+	Miner_Info _mi;
+	getMinerStats(&_mi);
+
+	getConnectedPoolStats(&pool);
+
+	debug_log(LOG_DBX, "getJsonpStatus(): params=%s", params);
+
+	ptr = strstr(params, "index=");
+	if (ptr != NULL)
+	{
+		ptr += 6;
+		ptrEnd = strstr(ptr, "&");
+		if (ptrEnd != NULL)
+		{
+			memset(temp, 0, sizeof(temp));
+			strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+			index = atoi(temp);
+		}
+	}
+
+	ptr = strstr(params, "callback=");
+	if (ptr != NULL)
+	{
+		ptr += 9;
+		ptrEnd = strstr(ptr, "&");
+		if (ptrEnd != NULL)
+		{
+			memset(temp, 0, sizeof(temp));
+			strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);			
+		}
+	}
+
+	sprintf_s( status, statusSize,
+		       "%s({\"version\": \"%s\", \"index\": \"%d\", \"content\": {\"Name\": \"%s\", \"Status\": \"%s\", \"Miner Avg [GH/s]\": \"%0.2f\", \"Max Temp [C]\": \"%.02f\", \"Accepted\": \"%d\", \"Rejected\": \"%d (%0.2f%%)\", \"Blocks\": \"%d\", \"Util\": \"%.02f\", \"Best Share [M]\": \"%.02f\", \"Pool\": \"%s\", \"Pool Diff\": \"%d\", \"Last Share\": \"%s\"}});",
+		       temp,
+			   WDOG_VERSION,
+			   index,
+			   cfg->wdogRigName,
+			   gpuStatusStr(_mi.status),     // Status
+			   _mi.summary.mhsAvg/1000.0,    // Hash Rate
+			   _mi.summary.maxTemp,          // Max Temperature
+			   _mi.summary.accepted,        
+			   _mi.summary.rejected,
+			   (float) ((float) _mi.summary.rejected / ((float) _mi.summary.rejected + _mi.summary.accepted)) * 100.00,
+			   _mi.summary.foundBlocks,
+			   _mi.summary.util,
+			   _mi.summary.bestshare/1000,
+			   pool.url,
+			   pool.diff,
+			   pool.lastShareStr		
+			);
+
+	debug_log(LOG_DBX, "getJsonpStatus(): status: %s", status);
+} // end of getJsonpStatus()
+
 void getWatchdogStatus(char * status, int statusSize, double * avg, double * util, int * hw)
 {
 	Miner_Info _mi;
@@ -146,12 +213,16 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	double utilTotal = 0.0;
 	PoolInfo poolStats;
 
+	POOL_Stats pool;
+
 	getMinerStats(&_mi);
 
 	getProcessInfo(cfg->minerExeName, &_minerProcessInfo);
 	getProcessInfo(cfg->wdogExeName, &_akbashProcessInfo);
 
 	getADLStats(&_adlInfo);
+
+	getConnectedPoolStats(&pool);
 
 	memset(status, 0, statusSize);
 	memset(_temp, 0, sizeof(_temp));
@@ -197,14 +268,16 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 			   MINER_DETAILS_TEMPL,
 			   _minerProcessInfo.processID,  // PID
 			   gpuStatusStr(_mi.status),     // Status
-			   _mi.summary.mhsAvg,           // Hash Rate
+			   _mi.summary.mhsAvg/1000.0,    // Hash Rate
 			   _mi.summary.maxTemp,          // Max Temperature
 			   _mi.summary.accepted,        
 			   _mi.summary.rejected,
 			   (float) ((float) _mi.summary.rejected / ((float) _mi.summary.rejected + _mi.summary.accepted)) * 100.00,
 			   _mi.summary.foundBlocks,
 			   _mi.summary.util,
-			   _mi.summary.bestshare/1000			   
+			   _mi.summary.bestshare/1000,
+			   pool.diff,
+			   pool.lastShareStr		
 			);
 
 	strcat_s(status, statusSize, _temp);
@@ -212,6 +285,30 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 	*avg  = _mi.summary.mhsAvg;
 	*hw   = _mi.summary.hw;
 	*util = _mi.summary.util;
+
+	if (_mi.config.poolCount > 0)
+	{
+		strcat_s(status, statusSize, "Configured pools:<br>");
+
+		strcat_s(status, statusSize, POOL_DETAILS_TEML_BEGIN);
+
+		for (i=0; i < _mi.config.poolCount; i++)
+		{	
+			sprintf_s( _temp, sizeof(_temp),
+				POOL_DETAILS_TEML_ROW,
+				_mi.pools[i].id, 
+				_mi.pools[i].status,
+				_mi.pools[i].connected == 1 ? "Connected" : "Failover",
+				_mi.pools[i].priority,
+				_mi.pools[i].url,
+				_mi.pools[i].diff,
+				_mi.pools[i].lastShareStr
+			);
+
+			strcat_s(status, statusSize, _temp);
+		}
+		strcat_s(status, statusSize, POOL_DETAILS_TEML_END);
+	}
 
 	strcat_s(status, statusSize, "Monitored devices:<br>");
 	
@@ -266,7 +363,7 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 					   _mi.pga[i].id, 
 					   gpuStatusStr(_mi.pga[i].status), 
 					   _mi.pga[i].disabled ? "OFF" : "ON",
-					   _mi.pga[i].avg, _mi.pga[i].temp, _mi.pga[i].accepted, _mi.pga[i].hw, _mi.pga[i].accepted, 
+					   _mi.pga[i].avg/1000.0, _mi.pga[i].temp, _mi.pga[i].accepted, _mi.pga[i].hw, _mi.pga[i].accepted, 
 					   _mi.pga[i].accepted ? 100.00*((float) _mi.pga[i].hw) / ((float) _mi.pga[i].accepted) : 0.00, _mi.pga[i].util 
 					 );
 			strcat_s(status, statusSize, _temp);
@@ -277,7 +374,7 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 
 		sprintf_s( _temp, sizeof(_temp),
 			PGA_DETAILS_TEML_LAST_ROW,
-			avgTotal, 
+			avgTotal/1000.0, 
 			utilTotal
 		);
 
@@ -286,27 +383,39 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 		strcat_s(status, statusSize, PGA_DETAILS_TEML_END);
 	}
 
-	if (_mi.config.poolCount > 0)
+	if (_mi.config.ascCount > 0)
 	{
-		strcat_s(status, statusSize, "Configured pools:<br>");
+		strcat_s(status, statusSize, PGA_DETAILS_TEML_BEGIN);
 
-		strcat_s(status, statusSize, POOL_DETAILS_TEML_BEGIN);
+		for (i=0; i < _mi.config.ascCount; i++)
+		{
+			if (waitForShutdown(1)) break;
 
-		for (i=0; i < _mi.config.poolCount; i++)
-		{	
-			sprintf_s( _temp, sizeof(_temp),
-				POOL_DETAILS_TEML_ROW,
-				_mi.pools[i].id, 
-				_mi.pools[i].status,
-				_mi.pools[i].priority == 0 ? "Connected" : "Failover",
-				_mi.pools[i].priority,
-				_mi.pools[i].url
-			);
-
+			sprintf_s( _temp, sizeof(_temp), 
+					   PGA_DETAILS_TEML_ROW,
+					   _mi.asc[i].id, 
+					   gpuStatusStr(_mi.asc[i].status), 
+					   _mi.asc[i].disabled ? "OFF" : "ON",
+					   _mi.asc[i].avg/1000.0, _mi.asc[i].temp, _mi.asc[i].accepted, _mi.asc[i].hw, _mi.asc[i].accepted, 
+					   _mi.asc[i].accepted ? 100.00*((float) _mi.asc[i].hw) / ((float) _mi.asc[i].accepted) : 0.00, _mi.asc[i].util 
+					 );
 			strcat_s(status, statusSize, _temp);
+
+			avgTotal += _mi.asc[i].avg;
+			utilTotal += _mi.asc[i].util;
 		}
-		strcat_s(status, statusSize, POOL_DETAILS_TEML_END);
+
+		sprintf_s( _temp, sizeof(_temp),
+			PGA_DETAILS_TEML_LAST_ROW,
+			avgTotal/1000.0, 
+			utilTotal
+		);
+
+		strcat_s(status, statusSize, _temp);
+
+		strcat_s(status, statusSize, PGA_DETAILS_TEML_END);
 	}
+
 
     // --------------------
 	// AMD GPU H/W details.
@@ -325,7 +434,6 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 		strcat_s(status, statusSize, _temp);
 	}
 
-
 	if (cfg->poolInfoDisabled == 0)
 	{
 		// -------------
@@ -341,7 +449,7 @@ void getWatchdogStatus(char * status, int statusSize, double * avg, double * uti
 				   sizeof(_temp),
 				   POOLSTATS_DETAILS_TEMPL,
 				   poolStats.balance,
-				   poolStats.hashrate,
+				   poolStats.hashrate/1000.0,
 				   total == 0 ? 0.00 : poolStats.valids*100.00/total
 			);
 
@@ -407,6 +515,7 @@ DWORD WINAPI listenForCommands( LPVOID lpParam )
 	char ok[WDOG_STATUS_STR_LEN] = {0};
 	char * p = NULL;
 	char *cmd = NULL;
+	char *cmdParams = NULL;
 
 	int i = 0;
 	int rc = 0;
@@ -565,6 +674,7 @@ DWORD WINAPI listenForCommands( LPVOID lpParam )
 			p = strstr(id+7, ";");
 			if (p != NULL)
 			{
+				cmdParams = p + 1;
 				*p = 0;
 				cmd = (char *) calloc(1, p-id);
 
@@ -649,20 +759,29 @@ DWORD WINAPI listenForCommands( LPVOID lpParam )
 											strcpy(ok, "<html><body>200 OK</body></html>");
 										} else											
 										{
-											if (strncmp(cmd, WEB_SWITCH_POOL, strlen(WEB_SWITCH_POOL)) == 0)
+											if (strncmp(cmd, WEB_JSONP_SUMMARY, strlen(WEB_JSONP_SUMMARY)) == 0)
 											{
-												debug_log(LOG_SVR, "listenForCommands(): received %s command", WEB_SWITCH_POOL);
-												p = cmd+strlen(WEB_SWITCH_POOL);
-												int poolNum = atoi(p);
-
-												debug_log(LOG_SVR, "listenForCommands(): pool to switch: %d", poolNum);
-												switchPool(poolNum);
-												strcpy(ok, "<html><body>200 OK</body></html>");
+												debug_log(LOG_DBG, "listenForCommands(): received %s command", WEB_JSONP_SUMMARY);
+																					
+												getJsonpStatus(ok, sizeof(ok), cmdParams);
 											} else
 											{											
-												debug_log(LOG_SVR, "listenForCommands(): received unknown command");
+												if (strncmp(cmd, WEB_SWITCH_POOL, strlen(WEB_SWITCH_POOL)) == 0)
+												{
+													debug_log(LOG_SVR, "listenForCommands(): received %s command", WEB_SWITCH_POOL);
+													p = cmd+strlen(WEB_SWITCH_POOL);
+													int poolNum = atoi(p);
+
+													debug_log(LOG_SVR, "listenForCommands(): pool to switch: %d", poolNum);
+													switchPool(poolNum);
+													strcpy(ok, "<html><body>200 OK</body></html>");
+												} else
+												{											
+													debug_log(LOG_SVR, "listenForCommands(): received unknown command");
+												}
 											}
 										}
+
 									}															
 								}
 

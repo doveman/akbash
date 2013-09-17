@@ -615,14 +615,14 @@ init_smtp:
 	debug_log(LOG_INF, "main(): checking miner status...");
 	fetchMinerInfo(&_mi, cfg);
 
-	if (_mi.config.gpuCount < 1 && _mi.config.pgaCount < 1)
+	if (_mi.config.gpuCount < 1 && _mi.config.pgaCount < 1 && _mi.config.ascCount < 1)
 	{
 		debug_log(LOG_SVR, "main(): unable to retrieve number of devices (GPU/PGA), waiting %d seconds for miner to initialize...", cfg->minerInitInterval);
 		Sleep(cfg->minerInitInterval*1000);
 
 		fetchMinerInfo(&_mi,cfg);
 
-		if (_mi.config.gpuCount < 1 && _mi.config.pgaCount < 1)
+		if (_mi.config.gpuCount < 1 && _mi.config.pgaCount < 1 && _mi.config.ascCount < 1)
 		{
 			debug_log(LOG_SVR, "main(): unable to retrieve number of devices (GPU/PGA), attempting to restart miner...");
 			restartMiner(DEFAULT_RESTART_DELAY, WDOG_RESTART_MINER_NOT_RUNNING, -1);

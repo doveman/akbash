@@ -130,6 +130,7 @@
     <None Include="etc\readme.txt">
       <Filter>etc</Filter>
     </None>
+    <None Include="akbash.html" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="akbash.rc">

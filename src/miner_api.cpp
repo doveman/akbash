@@ -79,6 +79,41 @@ void getMinerStats(Miner_Info * mi)
 	}
 }
 
+void getConnectedPoolStats(POOL_Stats * p)
+{
+	Miner_Info mi;
+	int i = 0;
+	int index = 0;
+
+	memset(&mi, 0, sizeof(mi));
+
+	if (p != NULL)
+	{
+		if (getGpuMutex())
+		{
+			__try
+			{
+				memcpy(&mi, &gMinerInfo, sizeof(Miner_Info));
+			} __except(EXCEPTION_EXECUTE_HANDLER)
+			{
+			}
+				
+			releaseGpuMutex();
+		}
+	}
+
+	for (i = 0; i < mi.config.poolCount; i++)
+	{
+		if (mi.pools[i].connected)
+		{
+			index = i;
+			break;
+		}
+	}
+
+	memcpy(p, &mi.pools[index], sizeof(POOL_Stats));
+} // end of getConnectedPoolStats()
+
 void resetMinerInfoObject(Miner_Info * mi)
 {
 	int i = 0;
@@ -91,6 +126,8 @@ void resetMinerInfoObject(Miner_Info * mi)
 
 	for (i=0; i < MAX_PGA_DEVICES; i++)	mi->pga[i].status = NOT_CONNECTED;
 
+	for (i=0; i < MAX_ASC_DEVICES; i++)	mi->asc[i].status = NOT_CONNECTED;
+
 	sprintf(mi->summary.startedOn, "%02d/%02d/%04d %02d:%02d:%02d", 0, 0, 0, 0, 0,0);
 } // end of resetMinerInfoObject()
 
@@ -98,10 +135,11 @@ void displayMinerInfoObject(Miner_Info * mi)
 {
 	int i = 0;
 
-	debug_log( LOG_DBG, "displayMinerInfoObject(): status: %s, gpus: %d, pgas: %d, a: %d, gw: %d, avg: %0.2f, hw: %d, since: %s, u: %0.2f, ver: %s, days: %d, hrs: %d, min: %d, secs: %d, found blocks: %d",
+	debug_log( LOG_DBG, "displayMinerInfoObject(): status: %s, gpus: %d, pgas: %d, asics: %d a: %d, gw: %d, avg: %0.2f, hw: %d, since: %s, u: %0.2f, ver: %s, days: %d, hrs: %d, min: %d, secs: %d, found blocks: %d",
 		       gpuStatusStr(mi->status),
 			   mi->config.gpuCount,
 			   mi->config.pgaCount,
+			   mi->config.ascCount,
 			   mi->summary.accepted,
 			   mi->summary.getworks,
 			   mi->summary.mhsAvg,
@@ -140,6 +178,17 @@ void displayMinerInfoObject(Miner_Info * mi)
 				   mi->pga[i].temp,
 				   mi->pga[i].hw,
 				   mi->pga[i].util
+		         );
+
+	for (i=0; i < mi->config.ascCount; i++)	
+		debug_log( LOG_DBG, "displayMinerInfoObject(): asc %d, disabled: %s, status: %s, avg: %0.2f, %0.2fC hw: %d, u: %0.2f",
+		           mi->asc[i].id,
+				   mi->asc[i].disabled ? "Y" : "N",
+		           gpuStatusStr(mi->asc[i].status),
+				   mi->asc[i].avg,
+				   mi->asc[i].temp,
+				   mi->asc[i].hw,
+				   mi->asc[i].util
 		         );
 
 	for (i=0; i < mi->config.poolCount; i++)	
@@ -508,64 +557,62 @@ void parsePGAStats(char * buf, PGA_Stats * stats)
 						stats->temp = atof(temp);
 					}
 				}
-						ptr = strstr(buf, "MHS av");
+
+				ptr = strstr(buf, "MHS av");
+				if (ptr != NULL)
+				{
+					ptr += 8;
+							//MHS av\":%.2f,\"MHS %ds\":%.2f,\"Accepted\":%d,\"Rejected\":%d,\"Hardware Errors\":%d,\"Utility\":%.2f,\"Last Share Pool\":%d,\"Last Share Time\":%lu,\"Total MH\":%.4f}",
+					ptrEnd = strstr(ptr, ",");
+					if (ptrEnd != NULL)
+					{
+						memset(temp, 0, sizeof(temp));
+						strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+						stats->avg = atof(temp);
+
+						ptr = strstr(buf, "Hardware Errors");
 						if (ptr != NULL)
 						{
-							ptr += 8;
-									//MHS av\":%.2f,\"MHS %ds\":%.2f,\"Accepted\":%d,\"Rejected\":%d,\"Hardware Errors\":%d,\"Utility\":%.2f,\"Last Share Pool\":%d,\"Last Share Time\":%lu,\"Total MH\":%.4f}",
+							ptr += 17;
+							//Hardware Errors\":%d,\"Utility\":%.2f,\"Last Share Pool\":%d,\"Last Share Time\":%lu,\"Total MH\":%.4f}",
 							ptrEnd = strstr(ptr, ",");
 							if (ptrEnd != NULL)
 							{
 								memset(temp, 0, sizeof(temp));
 								strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
-								stats->avg = atof(temp);
+								stats->hw = atoi(temp);
 
-								ptr = strstr(buf, "Hardware Errors");
+								ptr = strstr(buf, "Utility");
 								if (ptr != NULL)
 								{
-									ptr += 17;
+									ptr += 9;
 									//Hardware Errors\":%d,\"Utility\":%.2f,\"Last Share Pool\":%d,\"Last Share Time\":%lu,\"Total MH\":%.4f}",
 									ptrEnd = strstr(ptr, ",");
 									if (ptrEnd != NULL)
 									{
 										memset(temp, 0, sizeof(temp));
 										strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
-										stats->hw = atoi(temp);
+										stats->util = atof(temp);
 
-										ptr = strstr(buf, "Utility");
+										ptr = strstr(buf, "Accepted");
 										if (ptr != NULL)
 										{
-											ptr += 9;
-											//Hardware Errors\":%d,\"Utility\":%.2f,\"Last Share Pool\":%d,\"Last Share Time\":%lu,\"Total MH\":%.4f}",
+											ptr += 10;
+											// Accepted\":%d,\"Rejected
 											ptrEnd = strstr(ptr, ",");
 											if (ptrEnd != NULL)
 											{
 												memset(temp, 0, sizeof(temp));
 												strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
-												stats->util = atof(temp);
-
-												ptr = strstr(buf, "Accepted");
-												if (ptr != NULL)
-												{
-													ptr += 10;
-													// Accepted\":%d,\"Rejected
-													ptrEnd = strstr(ptr, ",");
-													if (ptrEnd != NULL)
-													{
-														memset(temp, 0, sizeof(temp));
-														strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
-														stats->accepted = atol(temp);
-													}
-												}
-
+												stats->accepted = atol(temp);
 											}
 										}
 									}
 								}
 							}
 						}
-					
-				
+					}
+				}
 			}
 		}
 	}
@@ -581,10 +628,22 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 	int len = 0;
 	int j = 0;
 	char * start = buf;
+	char * pool = NULL;
+	time_t lastShare = 0;
+	struct tm * ls = NULL;
 
+	time_t tNow = 0;
+	struct tm * tmNow = NULL;
+	struct tm tmNowCopy;
+
+	int index = 0;
+	int bestPriority = MAX_POOLS+1;
+
+//{"STATUS":[//	{"STATUS":"S","When":1378914612,"Code":7,"Msg":"9 Pool(s)","Description":"bfgminer 3.1.4"}],//		//		"POOLS":[////	{"POOL":0,"URL":"stratum+tcp://184.145.30.218:3333","Status":"Alive","Priority":0,"Long Poll":"N","Getworks":1512,"Accepted":10224,"Rejected":64,"Discarded":281333,"Stale":105,"Get Failures":91,"Remote Failures":15,"User":"guest1","Last Share Time":1378914607,"Diff1 Shares":29225375,"Proxy":"","Difficulty Accepted":29192541.44283495,"Difficulty Rejected":78389.19612421,"Difficulty Stale":89829.37068742,"Last Share Difficulty":3500.05340658,"Has Stratum":true,"Stratum Active":true,"Stratum URL":"184.145.30.218","Best Share":21789627},//	{"POOL":1,"URL":"stratum+tcp://50.31.149.57:3333","Status":"Alive","Priority":1,"Long Poll":"N","Getworks":47,"Accepted":835,"Rejected":287,"Discarded":1849,"Stale":3,"Get Failures":0,"Remote Failures":0,"User":"petervii_01","Last Share Time":1378869254,"Diff1 Shares":30545,"Proxy":"","Difficulty Accepted":24240.36987869,"Difficulty Rejected":3568.05444419,"Difficulty Stale":192.00292973,"Last Share Difficulty":32.00048829,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":99524},//	{"POOL":2,"URL":"stratum+tcp://50.31.149.57:3333","Status":"Alive","Priority":2,"Long Poll":"N","Getworks":4,"Accepted":0,"Rejected":0,"Discarded":0,"Stale":0,"Get Failures":0,"Remote Failures":0,"User":"petervii_01","Last Share Time":0,"Diff1 Shares":0,"Proxy":"","Difficulty Accepted":0.00000000,"Difficulty Rejected":0.00000000,"Difficulty Stale":0.00000000,"Last Share Difficulty":0.00000000,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":0},//	{"POOL":3,"URL":"stratum+tcp://stratum.btcguild.com:3333","Status":"Alive","Priority":3,"Long Poll":"N","Getworks":2,"Accepted":0,"Rejected":0,"Discarded":0,"Stale":0,"Get Failures":0,"Remote Failures":0,"User":"petervii_01","Last Share Time":0,"Diff1 Shares":0,"Proxy":"","Difficulty Accepted":0.00000000,"Difficulty Rejected":0.00000000,"Difficulty Stale":0.00000000,"Last Share Difficulty":0.00000000,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":0},//	{"POOL":4,"URL":"stratum+tcp://us1.eclipsemc.com:3333","Status":"Alive","Priority":4,"Long Poll":"N","Getworks":1,"Accepted":0,"Rejected":0,"Discarded":0,"Stale":0,"Get Failures":0,"Remote Failures":0,"User":"af_newbie_01","Last Share Time":0,"Diff1 Shares":0,"Proxy":"","Difficulty Accepted":0.00000000,"Difficulty Rejected":0.00000000,"Difficulty Stale":0.00000000,"Last Share Difficulty":0.00000000,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":0},//	{"POOL":5,"URL":"stratum+tcp://us2.eclipsemc.com:3333","Status":"Alive","Priority":5,"Long Poll":"N","Getworks":1,"Accepted":0,"Rejected":0,"Discarded":0,"Stale":0,"Get Failures":0,"Remote Failures":0,"User":"af_newbie_01","Last Share Time":0,"Diff1 Shares":0,"Proxy":"","Difficulty Accepted":0.00000000,"Difficulty Rejected":0.00000000,"Difficulty Stale":0.00000000,"Last Share Difficulty":0.00000000,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":0},//	{"POOL":6,"URL":"stratum+tcp://eu-stratum.btcguild.com:3333","Status":"Alive","Priority":6,"Long Poll":"N","Getworks":2,"Accepted":0,"Rejected":0,"Discarded":0,"Stale":0,"Get Failures":0,"Remote Failures":0,"User":"petervii_01","Last Share Time":0,"Diff1 Shares":0,"Proxy":"","Difficulty Accepted":0.00000000,"Difficulty Rejected":0.00000000,"Difficulty Stale":0.00000000,"Last Share Difficulty":0.00000000,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":0},//	{"POOL":7,"URL":"stratum+tcp://hash.mineb.tc:3333","Status":"Alive","Priority":7,"Long Poll":"N","Getworks":2,"Accepted":0,"Rejected":0,"Discarded":0,"Stale":0,"Get Failures":0,"Remote Failures":0,"User":"af_newbie.01","Last Share Time":0,"Diff1 Shares":0,"Proxy":"","Difficulty Accepted":0.00000000,"Difficulty Rejected":0.00000000,"Difficulty Stale":0.00000000,"Last Share Difficulty":0.00000000,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":0},//	{"POOL":8,"URL":"stratum+tcp://hash.nondescriptmining.com:3333","Status":"Alive","Priority":8,"Long Poll":"N","Getworks":2,"Accepted":0,"Rejected":0,"Discarded":0,"Stale":0,"Get Failures":0,"Remote Failures":0,"User":"af_newbie.01","Last Share Time":0,"Diff1 Shares":0,"Proxy":"","Difficulty Accepted":0.00000000,"Difficulty Rejected":0.00000000,"Difficulty Stale":0.00000000,"Last Share Difficulty":0.00000000,"Has Stratum":true,"Stratum Active":false,"Stratum URL":"","Best Share":0}//		//		],"id":1}
+	pool = start;
 	for (i=0; i < mi->config.poolCount; i++)
 	{
-		ptr = strstr(start, "\"POOL\":");
+		ptr = strstr(pool, "\"POOL\":");
 
 		if (ptr != NULL)
 		{
@@ -598,7 +657,7 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 				strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
 				mi->pools[i].id = atoi(temp);
 
-				ptr = strstr(start, "\"URL\":");
+				ptr = strstr(pool, "\"URL\":");
 
 				if (ptr != NULL)
 				{
@@ -609,7 +668,7 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 					{
 						strncpy_s(mi->pools[i].url, sizeof(mi->pools[i].url), ptr, ptrEnd-ptr);
 
-						ptr = strstr(start, "\"Status\":");
+						ptr = strstr(pool, "\"Status\":");
 						if (ptr != NULL)
 						{				
 							ptr += 10;							
@@ -631,7 +690,10 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 								}
 								mi->pools[i].status[len] = 0;
 
-								ptr = strstr(start, "\"Priority\":");
+								if (strcmp(mi->pools[i].status, "ALIVE") == 0)
+									mi->pools[i].alive = 1;
+
+								ptr = strstr(pool, "\"Priority\":");
 								if (ptr != NULL)
 								{				
 									ptr += 11;							
@@ -645,6 +707,71 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 										mi->pools[i].priority = atoi(temp);										
 									}
 								}
+
+								// Last Share Time
+								ptr = strstr(pool, "\"Last Share Time\":");
+								if (ptr != NULL)
+								{				
+									ptr += 18;							
+
+									ptrEnd = strstr(ptr, ",");
+									if (ptrEnd != NULL)
+									{
+										start = ptrEnd;
+										memset(temp, 0, sizeof(temp));
+										strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+										mi->pools[i].lastShare = atoi(temp); // time of last share
+										lastShare = mi->pools[i].lastShare;
+
+										if (lastShare > 0)
+										{											
+											time(&tNow);
+											tmNow = localtime(&tNow);
+
+											memset(&tmNowCopy, 0, sizeof(tmNowCopy));
+											memcpy(&tmNowCopy, tmNow, sizeof(tmNowCopy));
+
+											ls = localtime(&lastShare); // lib internal tm structure is overwritten
+
+											if ( (ls->tm_mon == tmNowCopy.tm_mon) &&
+												 (ls->tm_mday == tmNowCopy.tm_mday) &&
+												 (ls->tm_year == tmNowCopy.tm_year) 
+											   )
+												sprintf( mi->pools[i].lastShareStr, "%02d:%02d:%02d (today)",
+														 ls->tm_hour,
+														 ls->tm_min,
+														 ls->tm_sec
+													  );
+											else
+												sprintf( mi->pools[i].lastShareStr, "%02d:%02d:%02d (%02d/%02d/%02d)",
+														 ls->tm_hour,
+														 ls->tm_min,
+														 ls->tm_sec,
+														 ls->tm_mon+1,
+														 ls->tm_mday,
+														 ls->tm_year-100 // 12 for 2012
+													  );
+										} else
+											strcpy(mi->pools[i].lastShareStr, "n/a");
+									}
+								}
+
+								// "Last Share Difficulty":1280.01953155,
+								ptr = strstr(pool, "\"Last Share Difficulty\":");
+								if (ptr != NULL)
+								{				
+									ptr += 24;							
+
+									ptrEnd = strstr(ptr, ",");
+									if (ptrEnd != NULL)
+									{
+										start = ptrEnd;
+										memset(temp, 0, sizeof(temp));
+										strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+										mi->pools[i].diff = atoi(temp);										
+									}
+								}
+
 							}
 						}
 					}
@@ -652,9 +779,28 @@ void parsePoolStats(char * buf, Miner_Info * mi)
 			}
 		}
 
-		//debug_log(LOG_SVR, "parsePoolStats(): pool: %d, url: %s, status: %s", mi->pools[i].id, mi->pools[i].url, mi->pools[i].status);
-
+		//debug_log(LOG_SVR, "parsePoolStats(): pool: %d, url: %s, status: %s, diff: %d, last share: %s", mi->pools[i].id, mi->pools[i].url, mi->pools[i].status, mi->pools[i].diff, mi->pools[i].lastShareStr);
+		pool = start;
 	}
+
+	// -------------------------------------------------------------------
+	// Find a connected pool (this only works in Failover strategy)
+	// Find alive pool with the lowest priority number (lowest -> highest)
+	// -------------------------------------------------------------------
+	for (i = 0; i < mi->config.poolCount; i++)
+	{
+		mi->pools[i].connected = 0;
+		if (mi->pools[i].alive)
+		{
+			if (mi->pools[i].priority < bestPriority)
+			{
+				bestPriority = mi->pools[i].priority;
+				index = i;
+			}			  
+		}
+	}
+
+	mi->pools[index].connected = 1;
 }
 
 int disableGPU(int gpu)
@@ -773,6 +919,20 @@ void fetchPGAStats(int gpu, PGA_Stats * stats)
 	}
 } // end of fetchPGAStats()
 
+void fetchASCStats(int gpu, PGA_Stats * stats)
+{
+	char command[256] = {0};
+	char buf[RECVSIZE+1] = {0};
+
+	sprintf_s(command, sizeof(command), "{ \"command\" : \"asc\" , \"parameter\" : \"%d\" }", gpu);
+
+	if (sendCommand(command, buf, sizeof(buf)) == 1)
+	{
+		parsePGAStats(buf, stats);
+		stats->id = gpu;
+	}
+} // end of fetchASCStats()
+
 void parseMinerConfig(char * buf, Miner_Config * minerCfg)
 {
 	char temp[256] = {0};
@@ -780,6 +940,64 @@ void parseMinerConfig(char * buf, Miner_Config * minerCfg)
 	char * ptrEnd = NULL;
 
 	memset(minerCfg, 0, sizeof(Miner_Config));
+
+	//debug_log( LOG_SVR, "parseMinerConfig(): buf: %s", buf);
+
+	ptr = strstr(buf,"\"ASC Count\":");
+	if (ptr != NULL)
+	{
+		ptr += 12;
+
+		ptrEnd = strstr(ptr, ",");
+
+		if (ptrEnd != NULL)
+		{
+			memset(temp, 0, sizeof(temp));
+			strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+			minerCfg->ascCount = atoi(temp);
+
+			//debug_log( LOG_SVR, "parseMinerConfig(): ASC count, minerCfg->ascCount: %d", minerCfg->ascCount);
+
+			if (minerCfg->ascCount > MAX_ASC_DEVICES)
+			{
+				debug_log( LOG_SVR, 
+							"parseMinerConfig(): number of ASICs defined in miner (%d) is greater than %d ASICs supported by akbash, only the first %d ASICs will be monitored.",
+							minerCfg->ascCount,
+							MAX_ASC_DEVICES,
+							MAX_ASC_DEVICES
+							);
+				minerCfg->ascCount = MAX_ASC_DEVICES;
+			}
+		}
+	}
+
+	ptr = strstr(buf,"\"PGA Count\":");
+	if (ptr != NULL)
+	{
+		ptr += 12;
+
+		ptrEnd = strstr(ptr, ",");
+
+		if (ptrEnd != NULL)
+		{
+			memset(temp, 0, sizeof(temp));
+			strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+			minerCfg->pgaCount = atoi(temp);
+			
+			//debug_log( LOG_SVR, "parseMinerConfig(): PGA count, minerCfg->pgaCount: %d", minerCfg->pgaCount);
+
+			if (minerCfg->pgaCount > MAX_PGA_DEVICES)
+			{
+				debug_log( LOG_SVR, 
+							"parseMinerConfig(): number of PGAs defined in cgminer (%d) is greater than %d PGAs supported by akbash, only the first %d PGAs will be monitored.",
+							minerCfg->pgaCount,
+							MAX_PGA_DEVICES,
+							MAX_PGA_DEVICES
+							);
+				minerCfg->pgaCount = MAX_PGA_DEVICES;
+			}
+		}
+	}
 
 	ptr = strstr(buf,"\"GPU Count\":");
 	if (ptr != NULL)
@@ -804,61 +1022,33 @@ void parseMinerConfig(char * buf, Miner_Config * minerCfg)
 							);
 				minerCfg->gpuCount = MAX_GPU_DEVICES;
 			}
-
-			ptr = strstr(buf,"\"PGA Count\":");
-			if (ptr != NULL)
-			{
-				ptr += 12;
-
-				ptrEnd = strstr(ptr, ",");
-
-				if (ptrEnd != NULL)
-				{
-					memset(temp, 0, sizeof(temp));
-					strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
-					minerCfg->pgaCount = atoi(temp);
-
-					if (minerCfg->pgaCount > MAX_PGA_DEVICES)
-					{
-						debug_log( LOG_SVR, 
-									"parseMinerConfig(): number of PGAs defined in cgminer (%d) is greater than %d PGAs supported by akbash, only the first %d PGAs will be monitored.",
-									minerCfg->pgaCount,
-									MAX_PGA_DEVICES,
-									MAX_PGA_DEVICES
-									);
-						minerCfg->pgaCount = MAX_GPU_DEVICES;
-					}
-
-
-					ptr = strstr(buf,"\"Pool Count\":");
-					if (ptr != NULL)
-					{
-						ptr += 13;
-
-						ptrEnd = strstr(ptr, ",");
-
-						if (ptrEnd != NULL)
-						{
-							memset(temp, 0, sizeof(temp));
-							strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
-							minerCfg->poolCount = atoi(temp);							
-							if (minerCfg->poolCount > MAX_POOLS)
-							{
-								debug_log( LOG_SVR, 
-									       "parseMinerConfig(): number of pools defined in cgminer (%d) is greater than %d pools supported by akbash, only the first %d pools will be used.",
-									       minerCfg->poolCount,
-										   MAX_POOLS,
-										   MAX_POOLS
-										 );
-								minerCfg->poolCount = MAX_POOLS;
-							}
-						}
-					}
-				}
-			}
 		}
 	}
 
+	ptr = strstr(buf,"\"Pool Count\":");
+	if (ptr != NULL)
+	{
+		ptr += 13;
+
+		ptrEnd = strstr(ptr, ",");
+
+		if (ptrEnd != NULL)
+		{
+			memset(temp, 0, sizeof(temp));
+			strncpy_s(temp, sizeof(temp), ptr, ptrEnd-ptr);
+			minerCfg->poolCount = atoi(temp);							
+			if (minerCfg->poolCount > MAX_POOLS)
+			{
+				debug_log( LOG_SVR, 
+							"parseMinerConfig(): number of pools defined in cgminer (%d) is greater than %d pools supported by akbash, only the first %d pools will be used.",
+							minerCfg->poolCount,
+							MAX_POOLS,
+							MAX_POOLS
+							);
+				minerCfg->poolCount = MAX_POOLS;
+			}
+		}
+	}
 }
 
 void fetchMinerConfig(Miner_Config * minerCfg)
@@ -893,7 +1083,7 @@ void parseGPUSummary(char * buf, GPU_Summary * sum)
 //"SUMMARY":[{"Elapsed":326,"MHS av":1992.95,"Found Blocks":0,"Getworks":170,"Accepted":162,"Rejected":0,"Hardware Errors":0,"Utility":29.79,"Discarded":3,"Stale":0,"Get Failures":0,"Local Work":0,"Remote Failures":0,"Network Blocks":1,"Total MH
 //":650217.7833}]
 
-    debug_log( LOG_DBG, "parseGPUSummary(): buf: %s", buf);
+    //debug_log( LOG_DBG, "parseGPUSummary(): buf: %s", buf);
 
 	ptr = strstr(buf, "miner");
 
@@ -1110,12 +1300,14 @@ void fetchMinerInfo(Miner_Info * mi, CGMConfig * cfg)
 	// ------------------------
 	fetchMinerConfig(&(mi->config));
 
+	debug_log( LOG_DBG, "fetchMinerInfo(): gpu count: %d, pga count: %d, asic count: %d", mi->config.gpuCount, mi->config.pgaCount, mi->config.ascCount);
+	
 	// ------------------
 	// Get miner summary.
 	// ------------------
 	fetchGPUSummary(&(mi->summary));
 
-	if (mi->config.gpuCount > 0 || mi->config.pgaCount > 0)
+	if (mi->config.gpuCount > 0 || mi->config.pgaCount > 0 || mi->config.ascCount > 0)
 		mi->status = ALIVE;
 
 
@@ -1148,7 +1340,7 @@ void fetchMinerInfo(Miner_Info * mi, CGMConfig * cfg)
 						gpuStatusStr(mi->status)       
 					 );
 		}
-	}
+	}	
 
 	// --------------
 	// Get PGA Stats.
@@ -1165,10 +1357,34 @@ void fetchMinerInfo(Miner_Info * mi, CGMConfig * cfg)
 
 		if (mi->pga[i].status != ALIVE)
 		{
-			mi->status = mi->gpu[i].status;
+			mi->status = mi->pga[i].status;
 			debug_log( LOG_INF, "fetchMinerInfo(): pga %d: status: %s, setting miner status to: %s", 
 				       i,
 					   gpuStatusStr(mi->pga[i].status), 
+					   gpuStatusStr(mi->status)       
+					 );
+		}
+	}
+
+	// --------------
+	// Get ASC Stats.
+	// --------------
+	for(i=0; i < mi->config.ascCount; i++)
+	{
+		// -------------
+		// Get ASC stat.
+		// -------------
+		fetchASCStats(i, &(mi->asc[i]));
+
+		if (mi->asc[i].temp > maxTemp)
+			maxTemp = mi->asc[i].temp;
+
+		if (mi->asc[i].status != ALIVE)
+		{
+			mi->status = mi->asc[i].status;
+			debug_log( LOG_INF, "fetchMinerInfo(): asc %d: status: %s, setting miner status to: %s", 
+				       i,
+					   gpuStatusStr(mi->asc[i].status), 
 					   gpuStatusStr(mi->status)       
 					 );
 		}
@@ -1180,7 +1396,6 @@ void fetchMinerInfo(Miner_Info * mi, CGMConfig * cfg)
 	// Get POOL Stats.
 	// --------------
 	fetchPoolStats(mi);
-
 
 	// get target difficulty
 	memset(diffStr, 0, sizeof(diffStr));

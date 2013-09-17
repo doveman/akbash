@@ -13,7 +13,8 @@
 
 #define MAX_GPU_DEVICES 16
 #define MAX_PGA_DEVICES 384
-#define MAX_POOLS       10
+#define MAX_ASC_DEVICES 384
+#define MAX_POOLS       15
 
 #define GPU_STATS_STR_LEN 4096
 
@@ -21,6 +22,7 @@ typedef struct
 {
 	int gpuCount;
 	int pgaCount;
+	int ascCount;
 	int poolCount;
 } Miner_Config;
 
@@ -98,6 +100,11 @@ typedef struct _pool_Stats
 	char       url[256];
 	char       status[32];
 	int        priority;
+	int        diff;             // difficulty of last submitted share
+	int        lastShare;        // time of last submitted share
+	char       lastShareStr[32]; // time of last submitted share
+	int        connected;
+	int        alive;
 } POOL_Stats;
 
 typedef struct _minerInfo
@@ -107,6 +114,7 @@ typedef struct _minerInfo
 	GPU_Summary  summary;
 	GPU_Stats    gpu[MAX_GPU_DEVICES];
 	PGA_Stats    pga[MAX_PGA_DEVICES];
+	PGA_Stats    asc[MAX_ASC_DEVICES];
 	POOL_Stats   pools[MAX_POOLS];
 } Miner_Info;
 
@@ -114,6 +122,7 @@ char * gpuStatusStr(enum GPU_STATUS status);
 
 void initMinerListeningParameters(char * hostIP, int port);
 void resetMinerInfo();
+void getConnectedPoolStats(POOL_Stats * p);
 void getMinerStats(Miner_Info * mi);
 
 int disableGPU(int gpu);

@@ -16,7 +16,8 @@ typedef enum _logLevel
 	LOG_ERR = 0,
 	LOG_SVR = 1,
 	LOG_INF = 2, 
-	LOG_DBG = 3
+	LOG_DBG = 3,
+	LOG_DBX = 4
 
 } LOG_LEVEL;
 

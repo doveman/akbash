@@ -1,0 +1,192 @@
+<!--
+// --------------------------------------------------------------------------
+// Copyright © 2013 Peter Moss (peter@petermoss.com)
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 3 of the License, or (at your option)
+// any later version.  See GNULicenseV3.txt for more details.
+// --------------------------------------------------------------------------
+-->
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>    
+
+	<style type="text/css">
+	body {
+		font-family: verdana,arial,sans-serif;
+		font-size:11px;
+	}
+	table.gridtable {
+		font-family: verdana,arial,sans-serif;
+		font-size:11px;
+		color:#333333;
+		border-width: 1px;
+		border-color: #666666;
+		border-collapse: collapse;
+	}
+	table.gridtable th {
+		border-width: 1px;
+		padding: 8px;
+		border-style: solid;
+		border-color: #666666;
+		background-color: #dedede;
+	}
+	table.gridtable td {
+		border-width: 1px;
+		padding: 8px;
+		border-style: solid;
+		border-color: #666666;
+		background-color: #ffffff;
+	}
+	</style>
+
+    <script type="text/javascript">
+		// -------------------------------------------------------
+		// Add your sites here.  Just change the IP/hostname/port.
+		// -------------------------------------------------------
+        var sites = [
+            { id: "rig1", url: "http://184.151.52.53:80/wd_cmd=jsonp_summary;", status: "NOK", version: "", content: null},					
+			{ id: "rig2", url: "http://70.54.147.58:80/wd_cmd=jsonp_summary;", status: "NOK", version: "", content: null}
+		];
+
+		var processedSites = 0;  
+		
+		// ---------------------------------------------------
+		// Global AJAX options.  To be used by all AJAX calls.
+		// ---------------------------------------------------
+		$.ajaxSetup({ 
+		                timeout: 20000, // increase this if you are getting AJAXs errors
+						cache: false, 
+						type: "GET", 
+						dataType: "jsonp",
+					});
+					
+		function areWeThereYet()
+		{
+			if (processedSites >= sites.length)
+				printResults();
+		} // end of areWeThereYet()
+		
+		// ----------------------------------------
+		// Makes an AJAX call to the akbash server.
+		// ----------------------------------------
+        function processSite(i) 
+		{
+            $.ajax
+			(
+				{
+					url: sites[i].url,
+					data: { "index" : i }, // this will be passed to the server and will comeback in the jsonp string as an "index" variable
+					beforeSend: function(xhr, s)
+					{
+						sites[i].status = "NOK";
+						updateProgress(sites[i].id,sites[i].status + " (attempting to connect to site: " + sites[i].id + ")");
+					},
+					success: function (data, textStatus, xhr) 
+					{
+						// --------------------------------------------------------------------------------------
+						// When server returns correct JSONP that matches the request, this method willbe called.
+						// The callbacks might come out of sequence.  The index variable is used to match this
+						// callback with the original request.
+						// --------------------------------------------------------------------------------------
+					    var index = data.index;  // get the index to match our request with a response from the akbash server
+						
+						//alert("index: " + index + " i: " + i);
+						
+						if (index > -1 && index < sites.length)
+						{						
+							sites[index].status = "OK";							
+							sites[index].version = data.version;
+							sites[index].content = data.content;
+							sites[index].processed = 1;
+							processedSites = processedSites + 1;								
+							
+							updateProgress(sites[index].id,sites[index].status + " (received correct JSONP response)");
+						}
+						
+						areWeThereYet();
+					},
+					error: function (xhr, textStatus, errorThrown) 
+					{					
+						// -----------------------------------------------------
+						// No way to match the request with this error callback.
+						// So do an alert if you like.
+						// -----------------------------------------------------
+						//alert('xhr: ' + JSON.stringify(xhr) + 'textStatus: ' + textStatus + ' errorThrown: ' + errorThrown);					
+						processedSites = processedSites + 1;								
+						areWeThereYet();
+					}
+				}
+			);
+        } // end of processSite()
+
+		function updateProgress(n,s)
+		{
+			$('#divMain').html("processing " + processedSites + "/" + sites.length + ", site: " + n + ", status: " + s);
+		} // end of updateProgress()
+		
+        function printResults() 
+		{
+            $('#divMain').html('');
+			
+            var htm = '<table class="gridtable">';
+			var firstOKSite = 0;
+			
+			for (var i = 0; i < sites.length; i++)
+			{	if (sites[i].status == "OK")
+				{
+					firstOKSite = i;
+					break;
+				}
+			}			
+            var header = printHeader(firstOKSite);
+            htm = htm + header;
+
+            for (var i = 0; i < sites.length; i++) 
+			{
+				if (sites[i].status == "OK")
+					htm = htm + printRow(i);
+			}
+				
+            htm = htm + '</table>';
+            $('#divMain').append(htm);
+        } // end of printResults()
+
+        function printHeader(i) 
+		{
+            var tblRow = sites[i].content;
+            var tr = '<tr><th>Site ID</th>';
+
+            for (var prop in tblRow) 
+                tr = tr + '<th>' + prop + '</th>';
+
+            return tr + '</tr>';
+        } // end of printHeader()
+
+        function printRow(i) 
+		{
+            var tblRow = sites[i].content;
+            var tr = '<tr><td>' + sites[i].id + '</td>';
+
+            for (var prop in tblRow) 
+                tr = tr + '<td>' + tblRow[prop] + '</td>';
+				
+            return tr + '</tr>';
+        } // end of printRow()
+
+        function processSites() 
+		{
+            for (var i = 0; i < sites.length; i++) 
+				processSite(i);				
+			
+			areWeThereYet();
+        } // end of processSites()
+    </script>
+</head>
+
+<body onLoad="processSites()"><div id="divMain">. . .</div></body></html>
+
+ 

@@ -32,6 +32,7 @@ A:  Here is a list of features:
    - monitoring of hardware errors and automatic restart of the miner process when thresholds are reached
    - restart/reboot reasons are provided in email notification reports
    - supports smart metering schedules to disable/enable GPU mining activity
+   - remote monitoring of other akbash instances via AJAX web page (akbash.html)
 
 Q: How do I install akbash?
 ---------------------------------
@@ -179,6 +180,8 @@ akbash listens on TCP port for incoming connections and responds to the followin
 
    http://listen_ip:listen_port/wd_cmd=help;     -  help page
    http://listen_ip:listen_port/wd_cmd=status;   -  watchdog, miner and pool status/statistics page
+   http://listen_ip:listen_port/wd_cmd=jsonp_status;  -  watchdog, miner and pool status/statistics in jsonp format
+                                                         Used by akbash.html Ajax page
    http://listen_ip:listen_port/wd_cmd=restart;  -  restarts miner process
    http://listen_ip:listen_port/wd_cmd=reboot;   -  restarts Windows
    http://listen_ip:listen_port/wd_cmd=getlog;   -  displays the latest log file

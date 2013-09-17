@@ -165,6 +165,7 @@ echo To install akbash, copy contents of $(SolutionDir)build to your desired loc
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="akbash.html" />
     <None Include="etc\akbash-btc.conf" />
     <None Include="etc\akbash-ltc.conf" />
     <None Include="etc\readme.txt" />

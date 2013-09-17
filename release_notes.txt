@@ -1,22 +1,24 @@
-Latest version:  1.0.11
+Latest version:  1.0.12
 ----------------------
 
 binary:  https://github.com/af-newbie/akbash/build
 source code: https://github.com/af-newbie/akbash
 
-
-New in version 1.0.11
+New in version 1.0.12
 ---------------------
 
     - reformatted the status page:
-	    - removed hardware errors (as they are meaningless in ASICs world)
-	    - added "Blocks Found" field
-		- added target difficulty field
-	- fixed "block found" email notifications
-	- increased number of supported PGA devices to 384 (equivalent of 3 mini rigs running on 
-	  the same miner instance).  Max supported GPUs is still 16.
-	- added "miner-target-difficulty-url" : "https://blockchain.info/q/getdifficulty" to a config file.
-
+	    - added current pool info: difficulty, last share
+	- added "wd_cmd=jsonp_summary;" command, can be used with akbash.html to view
+	  status from multiple locations.
+    - added akbash.htnml page to view status of remote akbash instances
+	  Any number of XXXminer/akbash pairs can be added to view the consolidated
+	  statistics of the whole farm.  This page makes AJAX calls to "wd_cmd=jsonp_summary;"
+	  for each url defined atthe top ofthe page.  See the head section.
+	  If you use more than 20 urls, you might want to space them out as most browsers AJAX
+	  handling will choke on it. 
+	- fixed bugs in parsing of ASIC device status coming from cgminer
+	- fixed misc bugs in processing/allocation of device arrays
 
 To install:
 -----------

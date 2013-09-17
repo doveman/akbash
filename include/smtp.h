@@ -18,7 +18,7 @@
 #define SMTP_MAX_FQDN	          256
 #define SMTP_CONNECTION_CLOSED	  100
 
-#define SEND_DONATIONS_TO "If you have any questions or comments, please contact me at: <a href=\"mailto: peter@petermoss.com\">peter@petermoss.com</a><br><br>Please support akbash by donating to: <br><br><b>1CorsCrBEcbncfnR7BVKadUZbHP7xNZCjJ</b><br><br>Thank you<br><br>"
+#define SEND_DONATIONS_TO "If you have any questions or comments, please visit: <a href=\"https://bitcointalk.org/index.php?topic=76208.0\">Akbash thread on bitcointalk.org</a><br></b><br><br>Thank you<br><br>"
 
 void build_smtp_date(char *buf);
 
