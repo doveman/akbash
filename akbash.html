@@ -87,7 +87,7 @@
                beforeSend: function(xhr, s)
                {
                   sites[i].status = "NOK";
-                  updateProgress(sites[i].id,sites[i].status + " (attempting to connect to site: " + sites[i].id + ")");
+                  updateProgress(sites[i].id,sites[i].status + " (attempting to connect to site: \'" + sites[i].url + "\'), please wait...");
                },
                success: function (data, textStatus, xhr) 
                {
@@ -103,10 +103,9 @@
                      sites[index].status = "OK";							
                      sites[index].version = data.version;
                      sites[index].content = data.content;
-                     sites[index].processed = 1;
                      processedSites = processedSites + 1;								
 
-                     updateProgress(sites[index].id,sites[index].status + " (received correct JSONP response)");
+                     updateProgress(sites[index].id,sites[index].status + " (received a proper JSONP response)");
                   }
 
                   areWeThereYet();
@@ -127,15 +126,14 @@
 
       function updateProgress(n,s)
       {
-         $('#divMain').html("processing " + processedSites + "/" + sites.length + ", site: " + n + ", status: " + s);
+         $('#divMain').html("processing " + (processedSites+1) + "/" + sites.length + ", site: " + n + ", status: " + s);
       } // end of updateProgress()
 
       function printResults() 
       {
          $('#divMain').html('');
 
-         var htm = '<table class="gridtable">';
-         var firstOKSite = 0;
+         var firstOKSite = -1;
 
          for (var i = 0; i < sites.length; i++)
          {	
@@ -145,17 +143,27 @@
                break;
             }
          }			
-
-         var header = printHeader(firstOKSite);
-         htm = htm + header;
-
-         for (var i = 0; i < sites.length; i++) 
+         // ---------------------------------------------------
+         // At least one site should be returning a valid JSOP.
+         // No point to print an empty table.
+         // ---------------------------------------------------
+         if (firstOKSite > -1)
          {
-            if (sites[i].status == "OK")
-               htm = htm + printRow(i);
+             var htm = '<table class="gridtable">';
+             var header = printHeader(firstOKSite);
+             htm = htm + header;
+
+             for (var i = 0; i < sites.length; i++) 
+             {
+                if (sites[i].status == "OK")
+                   htm = htm + printRow(i);
+             }
+             htm = htm + '</table>';
+         } else
+         {
+             $('#divMain').html("unable to reach your defined sites.  Please edit akbash.html file to add/fix urls to your rigs...");
          }
-            
-         htm = htm + '</table>';
+         
          $('#divMain').append(htm);
       } // end of printResults()
 
@@ -184,7 +192,7 @@
       function processSites() 
       {
          for (var i = 0; i < sites.length; i++) 
-         processSite(i);				
+            processSite(i);				
 
          areWeThereYet();
       } // end of processSites()
