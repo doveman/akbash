@@ -1021,7 +1021,7 @@ wait_for_ov: // Check the result of the I/O overlapped operation
 		time(&end);
 		if (end-start > timeout/1000)
 		{
-			debug_log(LOG_SVR, "net_recvHttpLine(): timeout waiting for LF character, probably a telnet session pretending to be an HTTP client");
+			debug_log(LOG_SVR, "net_recvHttpLine(): timeout waiting for LF character...");
 			closesocket(sock);
 			WSACloseEvent(recvOverlapped.hEvent);
 			return SOCK_IO_ERROR;
