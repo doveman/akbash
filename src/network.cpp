@@ -1044,6 +1044,7 @@ int net_recvHttpResponse(int sock, char * response, int maxLen, int timeout)
 	int len = 0;
 	time_t start = 0;
 	time_t end   = 0;
+	bool foundHTTPRequest = false;
 
 	time(&start);
 
@@ -1064,7 +1065,11 @@ int net_recvHttpResponse(int sock, char * response, int maxLen, int timeout)
 			if (line[0] == 'G' && line[1] == 'E' && line[2] == 'T')
 			{
 				strcpy(response, line);
-				//break;
+
+				//debug_log(LOG_DBG, "net_recvHttpResponse(): response: ->%s<- last char: %d", response, response[strlen(response)-1]);
+
+				if (response[strlen(response)-1] == '\n')
+					foundHTTPRequest = true;
 			}
 		} else
 		{
@@ -1077,8 +1082,16 @@ int net_recvHttpResponse(int sock, char * response, int maxLen, int timeout)
 		time(&end);
 		if (end-start > SOCK_HTTP_INCOMING_REQUEST_TIMEOUT)
 		{
-			debug_log(LOG_SVR, "net_recvHttpResponse(): %d seconds timeout waiting for HTTP request headers; probably a telnet session pretending to be an HTTP client", SOCK_HTTP_INCOMING_REQUEST_TIMEOUT);
+			debug_log(LOG_SVR, "net_recvHttpResponse(): %d seconds timeout waiting for HTTP request headers termination sequence", SOCK_HTTP_INCOMING_REQUEST_TIMEOUT);
+			
+			// ---------------------------------------------------------------------------------------------------------------------------
+			// Some nasty HTTPC clients don't care about terminating HTTP headers, so accept them as long as they've issued a GET request.
+			// ---------------------------------------------------------------------------------------------------------------------------
+			if (foundHTTPRequest == true)
+				return SOCK_NO_ERROR;
+
 			closesocket(sock);
+
 			return SOCK_IO_ERROR;
 		}
 		SleepEx(SLEEP_EX_INTERVAL, TRUE);

@@ -13,9 +13,9 @@
 
 #define SOCK_LOCAL_CONNECT_TIMEOUT  3 // in seconds  
 #define SOCK_CONNECT_TIMEOUT  60      // in seconds 
-#define SOCK_TIMEOUT_INTERVAL 30000   // timeout on send/receive socket operations
+#define SOCK_TIMEOUT_INTERVAL 20000   // timeout on send/receive socket operations
 #define SOCK_TIMEOUT_GETLOG   45000   // timeout on send/receive socket operations
-#define SOCK_HTTP_INCOMING_REQUEST_TIMEOUT  60  // in seconds, how much time is allowed for HTTP clients to send their requests
+#define SOCK_HTTP_INCOMING_REQUEST_TIMEOUT  30  // in seconds, how much time is allowed for HTTP clients to send their requests
 
 #define SOCK_NO_ERROR         -9
 #define SOCK_WDOG_SHUTDOWN	  -10

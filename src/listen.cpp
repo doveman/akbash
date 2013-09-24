@@ -142,6 +142,7 @@ void getJsonpStatus(char * status, int statusSize, char * params)
 	char * ptrEnd = NULL;
 	int index = -1;
 	char temp[128];
+	float totalShares = 0.0;
 
 	Miner_Info _mi;
 	getMinerStats(&_mi);
@@ -178,6 +179,7 @@ void getJsonpStatus(char * status, int statusSize, char * params)
 
 	if (strlen(temp) > 0)
 	{
+		totalShares = (float) (_mi.summary.rejected + _mi.summary.accepted);
 		sprintf_s( status, statusSize,
 				   "%s({\"version\": \"%s\", \"index\": \"%d\", \"content\": {\"Name\": \"%s\", \"Status\": \"%s\", \"Miner Avg [GH/s]\": \"%0.2f\", \"Max Temp [C]\": \"%.02f\", \"Accepted\": \"%d\", \"Rejected\": \"%d (%0.2f%%)\", \"Blocks\": \"%d\", \"Util\": \"%.02f\", \"Best Share [M]\": \"%.02f\", \"Pool\": \"%s\", \"Pool Diff\": \"%d\", \"Last Share\": \"%s\"}});",
 				   temp,
@@ -189,7 +191,7 @@ void getJsonpStatus(char * status, int statusSize, char * params)
 				   _mi.summary.maxTemp,          // Max Temperature
 				   _mi.summary.accepted,        
 				   _mi.summary.rejected,
-				   (float) ((float) _mi.summary.rejected / ((float) _mi.summary.rejected + _mi.summary.accepted)) * 100.00,
+				   totalShares == 0 ? 0 : (float) ((float) _mi.summary.rejected / totalShares) * 100.00,
 				   _mi.summary.foundBlocks,
 				   _mi.summary.util,
 				   _mi.summary.bestshare/1000,
