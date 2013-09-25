@@ -181,13 +181,14 @@ void getJsonpStatus(char * status, int statusSize, char * params)
 	{
 		totalShares = (float) (_mi.summary.rejected + _mi.summary.accepted);
 		sprintf_s( status, statusSize,
-				   "%s({\"version\": \"%s\", \"index\": \"%d\", \"content\": {\"Name\": \"%s\", \"Status\": \"%s\", \"Miner Avg [GH/s]\": \"%0.2f\", \"Max Temp [C]\": \"%.02f\", \"Accepted\": \"%d\", \"Rejected\": \"%d (%0.2f%%)\", \"Blocks\": \"%d\", \"Util\": \"%.02f\", \"Best Share [M]\": \"%.02f\", \"Pool\": \"%s\", \"Pool Diff\": \"%d\", \"Last Share\": \"%s\"}});",
+				   "%s({\"version\": \"%s\", \"index\": \"%d\", \"content\": {\"Name\": \"%s\", \"Status\": \"%s\", \"Miner Avg [GH/s]\": \"%0.2f\", \"Last Share\": \"%s\", \"Max Temp [C]\": \"%.02f\", \"Accepted\": \"%d\", \"Rejected\": \"%d (%0.2f%%)\", \"Blocks\": \"%d\", \"Util\": \"%.02f\", \"Best Share [M]\": \"%.02f\", \"Pool\": \"%s\", \"Pool Diff\": \"%d\" }});",
 				   temp,
 				   WDOG_VERSION,
 				   index,
 				   cfg->wdogRigName,
 				   gpuStatusStr(_mi.status),     // Status
 				   _mi.summary.mhsAvg/1000.0,    // Hash Rate
+				   pool.lastShareStr,
 				   _mi.summary.maxTemp,          // Max Temperature
 				   _mi.summary.accepted,        
 				   _mi.summary.rejected,
@@ -196,8 +197,7 @@ void getJsonpStatus(char * status, int statusSize, char * params)
 				   _mi.summary.util,
 				   _mi.summary.bestshare/1000,
 				   pool.url,
-				   pool.diff,
-				   pool.lastShareStr		
+				   pool.diff
 				);
 	} else
 	{
