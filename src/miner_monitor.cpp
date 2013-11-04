@@ -238,6 +238,16 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 
 		getMinerStats(&_mi);
 
+		debug_log(LOG_INF, "monitorThread(): PGA count: %d, expected: %d, enableExpectedPGACountCheck: %d", _mi.config.pgaCount, cfg->expectedPGACount, cfg->enableExpectedPGACount);
+
+		if (cfg->enableExpectedPGACount == 1)
+		{
+			if (_mi.config.pgaCount < cfg->expectedPGACount)
+			{
+				reboot(WDOG_RESTART_PGA_HASH_THRESHOLD);			
+			}
+		}
+
 		gCurrStatus = _mi.status;
 
 		// If in NOT_CONNECTED longer than X minutes, restart it anyway

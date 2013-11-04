@@ -59,6 +59,8 @@
 #define MINER_SOLO_MINING              "miner-solo-mining"
 #define MINER_BLOCK_FOUND_NOTIFICATION "miner-notify-when-block-found"
 #define MINER_TARGET_DIFFICULTY_URL    "miner-target-difficulty-url"
+#define MINER_EXPECTED_PGA_COUNT       "miner-expected-pga-count"
+#define MINER_ENABLE_PGA_COUNT_CHECK   "miner-enable-pga-count-check"
 
 // ---------------------
 // Pool related entries.
@@ -148,6 +150,9 @@ typedef struct _cgmConfig
     int    minerListenPort;
 
 	char   minerTargetDifficultyUrl[MAX_PATH+1];
+
+	int    enableExpectedPGACount;
+	int    expectedPGACount;
 
 	int    poolInfoDisabled;
 	int    poolRefreshInterval;

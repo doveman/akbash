@@ -235,7 +235,9 @@ CGMConfig * parseConfigFile(const char * fileName)
 		const char * smart_metering_on_peak_shutdown[] = { SMART_METERING_ON_PEAK_SHUTDOWN, (const char *) 0 };
 		const char * smart_metering_on_peak_disable_gpus[] = { SMART_METERING_ON_PEAK_DISABLE_GPUS, (const char *) 0 };
 
-		
+		const char * miner_expected_pga_count[] = { MINER_EXPECTED_PGA_COUNT, (const char *) 0 };
+		const char * miner_enable_pga_count_check[] = { MINER_ENABLE_PGA_COUNT_CHECK, (const char *) 0 };
+
 		yajl_val v = yajl_tree_get(node, cgminer_exe, yajl_t_string);
 		if (v == NULL) 
 		{ 
@@ -502,6 +504,26 @@ CGMConfig * parseConfigFile(const char * fileName)
 		} else
 		{
 			strcpy_s(cgmConfig.minerTargetDifficultyUrl, sizeof(cgmConfig.minerTargetDifficultyUrl), YAJL_GET_STRING(v));
+		}
+
+		v = yajl_tree_get(node, miner_enable_pga_count_check, yajl_t_string);
+		if (v == NULL) 
+		{ 
+			cgmConfig.enableExpectedPGACount = 0;
+			fprintf(stderr, "\nparseConfigFile(): unable to find: \'%s\' field in the config file: \'%s\'. Defaulting to %d hardware errors\n", miner_enable_pga_count_check[0], fileName, cgmConfig.enableExpectedPGACount);
+		} else
+		{
+			cgmConfig.enableExpectedPGACount = atol(YAJL_GET_STRING(v));
+		}
+
+		v = yajl_tree_get(node, miner_expected_pga_count, yajl_t_string);
+		if (v == NULL) 
+		{ 
+			cgmConfig.expectedPGACount = 0;
+			fprintf(stderr, "\nparseConfigFile(): unable to find: \'%s\' field in the config file: \'%s\'. Defaulting to %d hardware errors\n", miner_expected_pga_count[0], fileName, cgmConfig.expectedPGACount);
+		} else
+		{
+			cgmConfig.expectedPGACount = atol(YAJL_GET_STRING(v));
 		}
 
 		// -----------------

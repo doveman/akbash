@@ -411,6 +411,8 @@ int main(int argc, char *argv[])
 	debug_log(LOG_DBG, "main(): %s: %d", MINER_SOLO_MINING, cfg->minerSoloMining);	
 	debug_log(LOG_DBG, "main(): %s: %d", MINER_BLOCK_FOUND_NOTIFICATION, cfg->minerNotifyWhenBlockFound);	
 	debug_log(LOG_DBG, "main(): %s: %s", MINER_TARGET_DIFFICULTY_URL, cfg->minerTargetDifficultyUrl);	
+	debug_log(LOG_DBG, "main(): %s: %d", MINER_ENABLE_PGA_COUNT_CHECK, cfg->enableExpectedPGACount);	
+	debug_log(LOG_DBG, "main(): %s: %d", MINER_EXPECTED_PGA_COUNT, cfg->expectedPGACount);	
 	
 	debug_log(LOG_DBG, "main(): --------------------");
 	debug_log(LOG_DBG, "main(): pool config entries:");
