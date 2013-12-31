@@ -28,7 +28,7 @@
 #define MIN_CUTOFF_TEMP_COOLDOWN   5       // minutes
 
 #define MIN_HW_POLLING_INTERVAL    60     // seconds
-#define MIN_HW_ACTIVITY_THRESHOLD  10
+#define MIN_HW_ACTIVITY_THRESHOLD  0
 #define MAX_HW_ACTIVITY_THRESHOLD  50
 #define MIN_HW_ACTIVITY_TIMEOUT    80
 
