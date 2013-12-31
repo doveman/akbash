@@ -360,7 +360,7 @@ DWORD WINAPI monitorThread( LPVOID lpParam )
 
 					howLongAgo -= gpuUtilTimer;
 
-					if (_adlInfo.iMinActivity <= cfg->wdogAdlGpuActivityThreshold)
+					if (_adlInfo.iMinActivity < cfg->wdogAdlGpuActivityThreshold)
 					{
 						if (gpuUtilTimer > 0 && howLongAgo > cfg->wdogAdlGpuActivityTimeout)
 						{
